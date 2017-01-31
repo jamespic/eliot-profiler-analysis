@@ -1,10 +1,11 @@
 import json
+import traceback
 from .wsgi_utils import returns_json, not_found
-from werkzeug.wsgi import DispatcherMiddleware, make_line_iter
+from werkzeug.wsgi import DispatcherMiddleware, make_line_iter, get_input_stream, responder
+from werkzeug.wrappers import Request, Response
 from wsgiref.util import shift_path_info
 
 
-WSGI_INPUT = 'wsgi.input'
 REQUEST_METHOD = 'REQUEST_METHOD'
 
 
@@ -23,30 +24,29 @@ def api(db):
 
     @returns_json
     def insert(environ, start_response):
-        instream = environ[WSGI_INPUT]
-        content_length = environ.get('CONTENT_LENGTH')
-        if content_length:
-            instream = make_line_iter(instream, int(content_length))
+        instream = make_line_iter(get_input_stream(environ))
         results = []
         for line in instream:
-            # try:
+            try:
                 jsobj = json.loads(line.decode('utf-8'))
                 key = db.insert(jsobj)
                 results.append(key)
-            # except:
-            #     start_response('400 Bad Request', [])
-            #     return {'message': 'Some data failed to insert', 'successes': results}
+            except:
+                traceback.print_exc()  # Replace this with eliot
+                start_response('400 Bad Request', [])
+                return {'message': 'Some data failed to insert', 'successes': results}
         start_response('200 OK', [])
         return {'message': 'Inserted OK', 'successes': results}
 
+    @responder
     def handle(environ, start_response):
         method = environ[REQUEST_METHOD]
         if method == 'GET':
-            return get(environ, start_response)
+            return get
         elif method == 'POST':
-            return insert(environ, start_response)
+            return insert
         else:
-            start_response('405 Method Not Allowed', [('Content-Type', 'text/plain')])
-            return ['Method {} Not Allowed'.format(method).encode('ascii')]
+            return Response('Method {} Not Allowed'.format(method), '405 Method Not Allowed')
+
 
     return handle
