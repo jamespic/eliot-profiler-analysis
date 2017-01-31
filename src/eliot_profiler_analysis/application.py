@@ -1,14 +1,35 @@
 from __future__ import absolute_import, print_function
-from .wsgi_utils import route, static_content, totally_static_content
+from .wsgi_utils import not_found
+from .api import api
+from .database import Database
+from werkzeug.wsgi import SharedDataMiddleware, DispatcherMiddleware
+from werkzeug.serving import make_server
 from os.path import join, dirname
+import shutil
+import tempfile
 
-app = route(
-    static=static_content(join(dirname(__file__), 'static')),
-    default=totally_static_content(join(dirname(__file__), 'static', 'index.html'))
-)
+
+def app(db):
+    return DispatcherMiddleware(
+        SharedDataMiddleware(
+            SharedDataMiddleware(
+                not_found,
+                {
+                    '/': join(dirname(__file__), 'static', 'index.html')
+                }
+            ),
+            {'/static': ('eliot_profiler_analysis', 'static')}
+        ),
+        {'/data': api(db)}
+    )
 
 if __name__ == '__main__':
-    from wsgiref.simple_server import make_server
-    httpd = make_server('', 8034, app)
-    print('Serving on 8034')
-    httpd.serve_forever()
+    tmpdir = tempfile.mkdtemp()
+    port = 8034
+    try:
+        with Database(tmpdir) as db:
+            httpd = make_server('', port, app(db), threaded=True)
+            print('Serving "{dbdir}" on {port}'.format(dbdir=tmpdir, port=port))
+            httpd.serve_forever()
+    finally:
+        shutil.rmtree(tmpdir)

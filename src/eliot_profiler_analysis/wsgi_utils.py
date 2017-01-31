@@ -3,6 +3,7 @@ from mimetypes import guess_type
 from werkzeug.wrappers import Request, Response
 from werkzeug.security import safe_join
 import os
+import json
 
 
 PATH_INFO = 'PATH_INFO'
@@ -35,27 +36,15 @@ def route(**routes):
     return handler
 
 
-def static_content(path):
+def returns_json(f):
     def handler(environ, start_response):
-        try:
-            resource_path = safe_join(path, environ[PATH_INFO].lstrip('/'))
-            return totally_static_content(resource_path)(environ, start_response)
-        except:
-            return not_found(environ, start_response)
-    return handler
-
-
-def totally_static_content(path):
-    def handler(environ, start_response):
-        mimetype, encoding = guess_type(path, strict=False)
-        f = open(path, 'rb')
-        headers = [
-            ('Content-Type', mimetype),
-            ('Content-Length', bytes(os.fstat(f.fileno()).st_size))
-        ]
-        if encoding:
-            headers.append(('Content-Encoding', encoding))
-        start_response('200 OK', headers)
-        wrapper = environ.get(FILE_WRAPPER, FileWrapper)
-        return wrapper(f)
+        def inner_start_response(status, headers):
+            inner_start_response.status = status
+            inner_start_response.headers = headers
+        result = f(environ, inner_start_response)
+        output = [json.dumps(result).encode('utf-8')]
+        start_response(inner_start_response.status,
+                       inner_start_response.headers
+                       + [('Content-Type', 'application/json')])
+        return output
     return handler

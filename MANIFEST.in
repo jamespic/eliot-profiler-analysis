@@ -1,0 +1,7 @@
+graft src/eliot_profiler_analysis/static
+# added by check_manifest.py
+include *.md
+include *.py
+include LICENSE
+include tox.ini
+recursive-include tests *.py

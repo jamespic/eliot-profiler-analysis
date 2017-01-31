@@ -33,6 +33,9 @@ def unyield(wrapped, instance, args, kwargs):
     return list(wrapped(*args, **kwargs))
 
 
+NEWEST = 'newest'
+OLDEST = 'oldest'
+
 
 class Database(object):
     def __init__(self, db_file):
@@ -61,6 +64,8 @@ class Database(object):
     def get(self, key):
         with self._env.begin() as txn:
             value = txn.get(key, db=self._master_db)
+            if value is None:
+                return None
             return json.loads(value.decode('utf-8'))
 
     @unyield
@@ -74,22 +79,45 @@ class Database(object):
                 success = cursor.next_dup()
 
     @unyield
+    def search(self, _start_time=None, _end_time=None, _count=None, _start_record=None, _order=NEWEST, **terms):
+        with self._env.begin() as txn:
+            cardinalities = self._get_cardinalities(txn)
+            terms = sorted(terms.items(), cardinalities.get)[::-1]
+            # FIXME
+
+    def _get_cardinalities(txn):
+        with txn.cursor(self._attr_value_db) as cursor:
+            result = {}
+            success = cursor.start()
+            while success:
+                result[cursor.key()] = cursor.count()
+                success = cursor.next_nodup()
+            return result
+
+
+    @unyield
     def attrib_names(self):
         with self._env.begin() as txn:
-            cursor = txn.cursor(db=self._attr_value_db)
-            success = cursor.first()
-            while success:
-                yield cursor.key().decode('utf-8')
-                success = cursor.next_nodup()
+            with txn.cursor(db=self._attr_value_db) as cursor:
+                success = cursor.first()
+                while success:
+                    yield cursor.key().decode('utf-8')
+                    success = cursor.next_nodup()
 
     @unyield
     def attrib_values(self, attrib_key):
         with self._env.begin() as txn:
-            cursor = txn.cursor(db=self._attr_value_db)
-            success = cursor.set_key(attrib_key.encode('utf-8'))
-            while success:
-                yield cursor.value()
-                success = cursor.next_dup()
+            with txn.cursor(db=self._attr_value_db) as cursor:
+                success = cursor.set_key(attrib_key.encode('utf-8'))
+                while success:
+                    yield cursor.value()
+                    success = cursor.next_dup()
 
     def close(self):
         self._env.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, value, type_, tb):
+        self.close()
