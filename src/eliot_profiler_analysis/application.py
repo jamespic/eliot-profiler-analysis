@@ -3,7 +3,7 @@ from .wsgi_utils import not_found
 from .api import api
 from .database import Database
 from werkzeug.wsgi import SharedDataMiddleware, DispatcherMiddleware
-from werkzeug.serving import make_server
+from cheroot.wsgi import Server
 from os.path import join, dirname
 import shutil
 import tempfile
@@ -28,8 +28,8 @@ if __name__ == '__main__':
     port = 8034
     try:
         with Database(tmpdir) as db:
-            httpd = make_server('', port, app(db), threaded=True)
+            httpd = Server(('0.0.0.0', port), app(db))
             print('Serving "{dbdir}" on {port}'.format(dbdir=tmpdir, port=port))
-            httpd.serve_forever()
+            httpd.safe_start()
     finally:
         shutil.rmtree(tmpdir)

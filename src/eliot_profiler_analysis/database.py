@@ -2,6 +2,7 @@ import datetime
 import json
 import lmdb
 import six
+from contextlib import closing
 from wrapt import decorator
 from dateutil.parser import parse as parse_date
 from pytz import utc
@@ -189,33 +190,36 @@ class Database(object):
                         success = cursor.prev_dup()
 
             def stop_time_ascending(stream):
-                for key, value in stream:
-                    if _key_time(key) >= _end_time:
-                        break
-                    else:
-                        yield key, value
+                with closing(stream):
+                    for key, value in stream:
+                        if _key_time(key) >= _end_time:
+                            break
+                        else:
+                            yield key, value
 
             def stop_time_descending(stream):
-                for key, value in stream:
-                    if _key_time(key) <= _start_time:
-                        break
-                    else:
-                        yield key, value
+                with closing(stream):
+                    for key, value in stream:
+                        if _key_time(key) <= _start_time:
+                            break
+                        else:
+                            yield key, value
 
             def filter_index(index_entry, stream):
-                with txn.cursor(self._attr_index_db) as cursor:
+                with closing(stream), txn.cursor(self._attr_index_db) as cursor:
                     for key, value in stream:
                         if cursor.set_key_dup(index_entry, key):
                             yield key, value
 
             def stop_count(stream):
-                i = 0
-                while i < _count:
-                    yield six.next(stream)
-                    i += 1
+                with closing(stream):
+                    i = 0
+                    while i < _count:
+                        yield six.next(stream)
+                        i += 1
 
             def materialize(stream):
-                with txn.cursor(self._master_db) as cursor:
+                with closing(stream), txn.cursor(self._master_db) as cursor:
                     for key, _ in stream:
                         yield key, cursor.get(key)
 
@@ -252,7 +256,6 @@ class Database(object):
                     term_query_order = sorted(terms.keys(), key=cardinalities.__getitem__, reverse=True)
                 except KeyError:
                     raise StopIteration
-                print term_query_order
                 index_entries = map(get_index_key, term_query_order)
                 primary_index = index_entries[0]
                 if _order == NEWEST:

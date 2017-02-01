@@ -22,7 +22,6 @@ def api(db):
     def get(environ, start_response):
         key = pop_path_info(environ)
         data = db.get(key)
-        print data
         if data is None:
             return not_found(environ, start_response)
         else:

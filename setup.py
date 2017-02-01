@@ -20,7 +20,8 @@ setup(
         'lmdb',
         'six',
         'wrapt',
-        'pytz'
+        'pytz',
+        'cheroot'
     ],
     test_suite='tests'
 )
