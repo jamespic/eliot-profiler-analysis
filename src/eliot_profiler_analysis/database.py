@@ -1,12 +1,20 @@
 import datetime
-import lmdb
 import json
+import lmdb
 import six
 from wrapt import decorator
+from dateutil.parser import parse as parse_date
+from pytz import utc
+
 try:
-    utc = datetime.timezone.utc
-except:
-    from pytz import utc
+    from itertools import izip
+except ImportError:
+    izip = zip
+
+try:
+    xrange
+except NameError:
+    xrange = range
 
 
 def extract_attribs(item):
@@ -37,6 +45,14 @@ NEWEST = 'newest'
 OLDEST = 'oldest'
 
 
+def _key_time(key):
+    return parse_date(key.split(b'~')[0])
+
+
+def _format_time(timestamp):
+    return utc.normalize(timestamp).isoformat()
+
+
 class Database(object):
     def __init__(self, db_file):
         self._env = lmdb.Environment(db_file, map_size=1024**4, max_dbs=3)
@@ -49,7 +65,7 @@ class Database(object):
 
     def insert(self, item):
         with self._env.begin(write=True) as txn:
-            now = datetime.datetime.now(utc).isoformat()
+            now = datetime.datetime.now(utc).isoformat()  # FIXME Extract this from item
             item_key = u'{now}~{item[task_uuid]}~{item[source]}~{item[thread]}'.format(now=now, item=item).encode('ascii')
             txn.put(item_key, json.dumps(item).encode('utf-8'), db=self._master_db)
             for attrib in extract_attribs(item):
@@ -63,37 +79,7 @@ class Database(object):
 
     def get(self, key):
         with self._env.begin() as txn:
-            value = txn.get(key, db=self._master_db)
-            if value is None:
-                return None
-            return json.loads(value.decode('utf-8'))
-
-    @unyield
-    def find(self, attrib_key, attrib_value):
-        with self._env.begin() as txn:
-            key = attrib_key.encode('utf-8') + b'~' + attrib_value.encode('utf-8')
-            cursor = txn.cursor(db=self._attr_index_db)
-            success = cursor.set_key(key)
-            while success:
-                yield cursor.value()
-                success = cursor.next_dup()
-
-    @unyield
-    def search(self, _start_time=None, _end_time=None, _count=None, _start_record=None, _order=NEWEST, **terms):
-        with self._env.begin() as txn:
-            cardinalities = self._get_cardinalities(txn)
-            terms = sorted(terms.items(), cardinalities.get)[::-1]
-            # FIXME
-
-    def _get_cardinalities(txn):
-        with txn.cursor(self._attr_value_db) as cursor:
-            result = {}
-            success = cursor.start()
-            while success:
-                result[cursor.key()] = cursor.count()
-                success = cursor.next_nodup()
-            return result
-
+            return txn.get(key, db=self._master_db)
 
     @unyield
     def attrib_names(self):
@@ -112,6 +98,195 @@ class Database(object):
                 while success:
                     yield cursor.value()
                     success = cursor.next_dup()
+
+    @unyield
+    def search(self, _start_time=None, _end_time=None, _count=None, _start_record=None, _order=NEWEST, **terms):
+        if _order not in [NEWEST, OLDEST]:
+            raise ValueError("_order must be 'newest' or 'oldest' - found {!r}".format(_order))
+        with self._env.begin() as txn:
+            def all_ascending():
+                with txn.cursor(self._master_db) as cursor:
+                    success = cursor.first()
+                    while success:
+                        yield cursor.item()
+                        success = cursor.next()
+
+            def all_ascending_start_time():
+                with txn.cursor(self._master_db) as cursor:
+                    success = cursor.set_range(_format_time(_start_time))
+                    while success:
+                        yield cursor.item()
+                        success = cursor.next()
+
+            def all_ascending_start_record():
+                with txn.cursor(self._master_db) as cursor:
+                    success = cursor.set_key(_start_record) and cursor.next()
+                    while success:
+                        yield cursor.item()
+                        success = cursor.next()
+
+            def all_descending():
+                with txn.cursor(self._master_db) as cursor:
+                    success = cursor.last()
+                    while success:
+                        yield cursor.item()
+                        success = cursor.prev()
+
+            def all_descending_end_time():
+                with txn.cursor(self._master_db) as cursor:
+                    success = cursor.prev() if cursor.set_range(_format_time(_end_time)) else cursor.last()
+                    while success:
+                        yield cursor.item()
+                        success = cursor.prev()
+
+            def all_descending_start_record():
+                with txn.cursor(self._master_db) as cursor:
+                    success = cursor.set_key(_start_record) and cursor.prev()
+                    while success:
+                        yield cursor.item()
+                        success = cursor.prev()
+
+            def indexed_ascending(index_entry):
+                with txn.cursor(self._attr_index_db) as cursor:
+                    success = cursor.set_key(index_entry)
+                    while success:
+                        yield cursor.value(), ()
+                        success = cursor.next_dup()
+
+            def indexed_ascending_start_time(index_entry):
+                with txn.cursor(self._attr_index_db) as cursor:
+                    success = cursor.set_range_dup(index_entry, _format_time(_start_time))
+                    while success:
+                        yield cursor.value(), ()
+                        success = cursor.next_dup()
+
+            def indexed_ascending_start_record(index_entry):
+                with txn.cursor(self._attr_index_db) as cursor:
+                    success = cursor.set_key_dup(index_entry, _start_record) and cursor.next_dup()
+                    while success:
+                        yield cursor.value(), ()
+                        success = cursor.next_dup()
+
+            def indexed_descending(index_entry):
+                with txn.cursor(self._attr_index_db) as cursor:
+                    success = cursor.set_key(index_entry) and cursor.last_dup()
+                    while success:
+                        yield cursor.value(), ()
+                        success = cursor.prev_dup()
+
+            def indexed_descending_end_time(index_entry):
+                with txn.cursor(self._attr_index_db) as cursor:
+                    success = cursor.prev_dup() if cursor.set_range_dup(index_entry, _format_time(_end_time)) else cursor.set_key(index_entry) and cursor.last_dup()
+                    while success:
+                        yield cursor.value(), ()
+                        success = cursor.prev_dup()
+
+            def indexed_descending_start_record(index_entry):
+                with txn.cursor(self._attr_index_db) as cursor:
+                    success = cursor.set_key_dup(index_entry, _start_record) and cursor.prev_dup()
+                    while success:
+                        yield cursor.value(), ()
+                        success = cursor.prev_dup()
+
+            def stop_time_ascending(stream):
+                for key, value in stream:
+                    if _key_time(key) >= _end_time:
+                        break
+                    else:
+                        yield key, value
+
+            def stop_time_descending(stream):
+                for key, value in stream:
+                    if _key_time(key) <= _start_time:
+                        break
+                    else:
+                        yield key, value
+
+            def filter_index(index_entry, stream):
+                with txn.cursor(self._attr_index_db) as cursor:
+                    for key, value in stream:
+                        if cursor.set_key_dup(index_entry, key):
+                            yield key, value
+
+            def stop_count(stream):
+                i = 0
+                while i < _count:
+                    yield six.next(stream)
+                    i += 1
+
+            def materialize(stream):
+                with txn.cursor(self._master_db) as cursor:
+                    for key, _ in stream:
+                        yield key, cursor.get(key)
+
+            def get_cardinalities():
+                with txn.cursor(self._attr_value_db) as cursor:
+                    result = {}
+                    success = cursor.first()
+                    while success:
+                        result[cursor.key()] = cursor.count()
+                        success = cursor.next_nodup()
+                    return result
+
+            def get_index_key(attrib):
+                return attrib.encode('utf-8') + b'~' + terms[attrib].encode('utf-8')
+
+            if not terms:
+                if _order == NEWEST:
+                    if _start_record is not None:
+                        stream = all_descending_start_record()
+                    elif _end_time is not None:
+                        stream = all_descending_end_time()
+                    else:
+                        stream = all_descending()
+                else:
+                    if _start_record is not None:
+                        stream = all_ascending_start_record()
+                    elif _start_time is not None:
+                        stream = all_ascending_start_time()
+                    else:
+                        stream = all_ascending()
+            else:
+                cardinalities = get_cardinalities()
+                try:
+                    term_query_order = sorted(terms.keys(), key=cardinalities.__getitem__, reverse=True)
+                except KeyError:
+                    raise StopIteration
+                print term_query_order
+                index_entries = map(get_index_key, term_query_order)
+                primary_index = index_entries[0]
+                if _order == NEWEST:
+                    if _start_record is not None:
+                        stream = indexed_descending_start_record(primary_index)
+                    elif _end_time is not None:
+                        stream = indexed_descending_end_time(primary_index)
+                    else:
+                        stream = indexed_descending(primary_index)
+                else:
+                    if _start_record is not None:
+                        stream = indexed_ascending_start_record(primary_index)
+                    elif _start_time is not None:
+                        stream = indexed_ascending_start_time(primary_index)
+                    else:
+                        stream = indexed_ascending(primary_index)
+
+            if _order == NEWEST and _start_time is not None:
+                stream = stop_time_descending(stream)
+            elif _order == OLDEST and _end_time is not None:
+                stream = stop_time_ascending(stream)
+
+            if terms:
+                for index_entry in index_entries[1:]:
+                    stream = filter_index(index_entry, stream)
+                stream = materialize(stream)
+
+            if _count is not None:
+                stream = stop_count(stream)
+
+            # import pudb
+            # pu.db
+            for x in stream:
+                yield x
 
     def close(self):
         self._env.close()
