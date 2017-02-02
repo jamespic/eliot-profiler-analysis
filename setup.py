@@ -15,6 +15,7 @@ setup(
     package_dir={'':'src'},
     include_package_data=True,
     install_requires=[
+        'dateutils',
         'eliot',
         'werkzeug',
         'lmdb',

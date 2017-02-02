@@ -11,7 +11,7 @@ class NotFoundTest(unittest.TestCase):
         client = Client(not_found, Response)
         response = client.get('/hello')
         self.assertEqual(404, response.status_code)
-        self.assertIn('/hello', response.data)
+        self.assertIn(b'/hello', response.data)
 
 
 class ReturnsJsonTest(unittest.TestCase):
@@ -22,7 +22,7 @@ class ReturnsJsonTest(unittest.TestCase):
         client = Client(app, Response)
         response = client.get('/')
         self.assertEqual(200, response.status_code)
-        self.assertEqual('{"success": true}', response.data)
+        self.assertEqual(b'{"success": true}', response.data)
 
     def test_success(self):
         @returns_json
@@ -32,7 +32,7 @@ class ReturnsJsonTest(unittest.TestCase):
         client = Client(app, Response)
         response = client.get('/')
         self.assertEqual(404, response.status_code)
-        self.assertEqual('{"found": false}', response.data)
+        self.assertEqual(b'{"found": false}', response.data)
         self.assertEqual('World', response.headers['X-Hello'])
 
     def test_failure(self):
