@@ -82,7 +82,9 @@ class Database(object):
 
     def get(self, key):
         with self._env.begin() as txn:
-            value = txn.get(key, db=self._master_db)
+            value = txn.get(key.encode('utf-8'), db=self._master_db)
+            if value is None:
+                return value
             return json.loads(value.decode('utf-8'))
 
     @unyield
@@ -100,7 +102,7 @@ class Database(object):
             with txn.cursor(db=self._attr_value_db) as cursor:
                 success = cursor.set_key(attrib_key.encode('utf-8'))
                 while success:
-                    yield cursor.value()
+                    yield cursor.value().decode('utf-8')
                     success = cursor.next_dup()
 
     @unyield
@@ -309,7 +311,7 @@ class Database(object):
 
             eliot.Message.new(query_plan=logged_query_plan).write()
             for key, value in stream:
-                yield key, json.loads(value.decode('utf-8'))
+                yield key.decode('utf-8'), json.loads(value.decode('utf-8'))
 
     def close(self):
         self._env.close()

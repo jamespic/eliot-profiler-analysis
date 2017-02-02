@@ -2,7 +2,10 @@ from cheroot.wsgi import PathInfoDispatcher
 from dateutil.parser import parse as parse_date
 import json
 from pytz import utc
-from urlparse import parse_qs
+try:
+    from urlparse import parse_qs
+except ImportError:
+    from urllib.parse import parse_qs
 from .wsgi_utils import returns_json
 from werkzeug.wsgi import make_line_iter, get_input_stream, responder, peek_path_info, pop_path_info, get_query_string
 from werkzeug.wrappers import Response
@@ -22,9 +25,8 @@ def _make_search_date(datestr):
 def api(db):
     @returns_json
     def get_data(environ, start_response):
-        unicode_key = pop_path_info(environ)
-        key = unicode_key.encode('utf-8')
-        with eliot.start_action(action_type='api:get-data', key=unicode_key) as action:
+        key = pop_path_info(environ)
+        with eliot.start_action(action_type='api:get-data', key=key) as action:
             data = db.get(key)
             if data is None:
                 action.add_success_fields(found=False)
@@ -39,7 +41,7 @@ def api(db):
         with eliot.start_action(action_type='api:insert-data') as action:
             instream = make_line_iter(get_input_stream(environ))
             lines = (json.loads(line.decode('utf-8')) for line in instream)
-            keys = db.insert(lines)
+            keys = [key.decode('utf-8') for key in db.insert(lines)]
             action.add_success_fields(inserted_count=len(keys))
             return {'message': 'Inserted OK', 'keys': keys}
 
@@ -79,9 +81,8 @@ def api(db):
 
     @returns_json
     def attrib_values(environ, start_response):
-        unicode_key = pop_path_info(environ)
-        key = unicode_key.encode('utf-8')
-        with eliot.start_action(action_type='api:get-attrib-values', key=unicode_key) as action:
+        key = pop_path_info(environ)
+        with eliot.start_action(action_type='api:get-attrib-values', key=key) as action:
             return db.attrib_values(key)
 
     @responder
