@@ -69,7 +69,10 @@ class Database(object):
     def insert(self, items):
         with self._env.begin(write=True) as txn:
             for item in items:
-                item_key = u'{item[start_time]}~{item[task_uuid]}~{item[source]}~{item[thread]}'.format(item=item).encode('ascii')
+                start_time = _format_time(parse_date(item['start_time']))
+                item_key = (u'{start_time}~{item[task_uuid]}~{item[source]}~{item[thread]}'
+                            .format(item=item, start_time=start_time)
+                            .encode('ascii'))
                 txn.put(item_key, json.dumps(item).encode('utf-8'), db=self._master_db)
                 for attrib in extract_attribs(item):
                     attrib_key = u'.'.join(attrib[:-1]).encode('utf-8')

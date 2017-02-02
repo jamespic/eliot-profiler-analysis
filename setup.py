@@ -5,9 +5,9 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='Eliot Profiler',
+    name='Eliot Profiler Analysis',
     version='0.1',
-    description='A hybrid profiler / mini APM tool, that links in with Eliot',
+    description='An analysis tool for Eliot Profiler data',
     author='James Pickering',
     author_email='james_pic@hotmail.com',
     url='https://github.com/jamespic/eliot-profiler',
