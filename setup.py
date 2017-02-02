@@ -21,7 +21,7 @@ setup(
         'six',
         'wrapt',
         'pytz',
-        'cheroot'
+        'cheroot>=5.1.0'
     ],
     test_suite='tests'
 )
