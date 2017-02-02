@@ -1,4 +1,5 @@
 import datetime
+import eliot
 import json
 import lmdb
 import six
@@ -24,7 +25,7 @@ def extract_attribs(item):
             if key in ('children, message'):
                 for extracted in extract_attribs(value):
                     yield extracted
-            elif key != 'task_level' and not key.endswith('time'):
+            elif key != 'task_level' and not key.endswith('time') and not key.startswith('time'):
                 for extracted in extract_attribs(value):
                     yield [key] + extracted
     elif isinstance(item, list):
@@ -64,23 +65,25 @@ class Database(object):
             self._attr_value_db = self._env.open_db(
                 b'attr_value', txn=txn, dupsort=True)
 
-    def insert(self, item):
+    @unyield
+    def insert(self, items):
         with self._env.begin(write=True) as txn:
-            now = datetime.datetime.now(utc).isoformat()  # FIXME Extract this from item
-            item_key = u'{now}~{item[task_uuid]}~{item[source]}~{item[thread]}'.format(now=now, item=item).encode('ascii')
-            txn.put(item_key, json.dumps(item).encode('utf-8'), db=self._master_db)
-            for attrib in extract_attribs(item):
-                attrib_key = u'.'.join(attrib[:-1]).encode('utf-8')
-                attrib_val = attrib[-1].encode('utf-8')
-                txn.put(attrib_key, attrib_val, db=self._attr_value_db)
+            for item in items:
+                item_key = u'{item[start_time]}~{item[task_uuid]}~{item[source]}~{item[thread]}'.format(item=item).encode('ascii')
+                txn.put(item_key, json.dumps(item).encode('utf-8'), db=self._master_db)
+                for attrib in extract_attribs(item):
+                    attrib_key = u'.'.join(attrib[:-1]).encode('utf-8')
+                    attrib_val = attrib[-1].encode('utf-8')
+                    txn.put(attrib_key, attrib_val, db=self._attr_value_db)
 
-                attrib_full = attrib_key + b'~' + attrib_val
-                txn.put(attrib_full, item_key, db=self._attr_index_db)
-            return item_key
+                    attrib_full = attrib_key + b'~' + attrib_val
+                    txn.put(attrib_full, item_key, db=self._attr_index_db)
+                yield item_key
 
     def get(self, key):
         with self._env.begin() as txn:
-            return txn.get(key, db=self._master_db)
+            value = txn.get(key, db=self._master_db)
+            return json.loads(value.decode('utf-8'))
 
     @unyield
     def attrib_names(self):
@@ -235,21 +238,28 @@ class Database(object):
             def get_index_key(attrib):
                 return attrib.encode('utf-8') + b'~' + terms[attrib].encode('utf-8')
 
+            logged_query_plan = []
             if not terms:
                 if _order == NEWEST:
                     if _start_record is not None:
                         stream = all_descending_start_record()
+                        logged_query_plan.append('all_descending_start_record')
                     elif _end_time is not None:
                         stream = all_descending_end_time()
+                        logged_query_plan.append('all_descending_end_time')
                     else:
                         stream = all_descending()
+                        logged_query_plan.append('all_descending')
                 else:
                     if _start_record is not None:
                         stream = all_ascending_start_record()
+                        logged_query_plan.append('all_ascending_start_record')
                     elif _start_time is not None:
                         stream = all_ascending_start_time()
+                        logged_query_plan.append('all_ascending_start_time')
                     else:
                         stream = all_ascending()
+                        logged_query_plan.append('all_ascending')
             else:
                 cardinalities = get_cardinalities()
                 try:
@@ -261,35 +271,45 @@ class Database(object):
                 if _order == NEWEST:
                     if _start_record is not None:
                         stream = indexed_descending_start_record(primary_index)
+                        logged_query_plan.append(('indexed_descending_start_record', primary_index))
                     elif _end_time is not None:
                         stream = indexed_descending_end_time(primary_index)
+                        logged_query_plan.append(('indexed_descending_end_time', primary_index))
                     else:
                         stream = indexed_descending(primary_index)
+                        logged_query_plan.append(('indexed_descending', primary_index))
                 else:
                     if _start_record is not None:
                         stream = indexed_ascending_start_record(primary_index)
+                        logged_query_plan.append(('indexed_ascending_start_record', primary_index))
                     elif _start_time is not None:
                         stream = indexed_ascending_start_time(primary_index)
+                        logged_query_plan.append(('indexed_ascending_start_time', primary_index))
                     else:
                         stream = indexed_ascending(primary_index)
+                        logged_query_plan.append(('indexed_ascending', primary_index))
 
             if _order == NEWEST and _start_time is not None:
                 stream = stop_time_descending(stream)
+                logged_query_plan.append('stop_time_descending')
             elif _order == OLDEST and _end_time is not None:
                 stream = stop_time_ascending(stream)
+                logged_query_plan.append('stop_time_ascending')
 
             if terms:
                 for index_entry in index_entries[1:]:
                     stream = filter_index(index_entry, stream)
+                    logged_query_plan.append(('filter_index', index_entry))
                 stream = materialize(stream)
+                logged_query_plan.append('materialize')
 
             if _count is not None:
                 stream = stop_count(stream)
+                logged_query_plan.append('stop_count')
 
-            # import pudb
-            # pu.db
-            for x in stream:
-                yield x
+            eliot.Message.new(query_plan=logged_query_plan).write()
+            for key, value in stream:
+                yield key, json.loads(value.decode('utf-8'))
 
     def close(self):
         self._env.close()

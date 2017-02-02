@@ -38,13 +38,14 @@ def route(**routes):
 
 def returns_json(f):
     def handler(environ, start_response):
-        def inner_start_response(status, headers):
-            inner_start_response.status = status
-            inner_start_response.headers = headers
+        def inner_start_response(status, headers, exc_info=None):
+            inner_start_response.started = True
+            return start_response(
+                status, headers + [('Content-Type', 'application/json')], exc_info)
+        inner_start_response.started = False
         result = f(environ, inner_start_response)
         output = [json.dumps(result).encode('utf-8')]
-        start_response(inner_start_response.status,
-                       inner_start_response.headers
-                       + [('Content-Type', 'application/json')])
+        if not inner_start_response.started:
+            start_response('200 OK', [('Content-Type', 'application/json')])
         return output
     return handler
