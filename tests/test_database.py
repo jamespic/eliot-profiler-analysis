@@ -1,51 +1,15 @@
+from __future__ import absolute_import
 import tempfile
 import unittest
 import shutil
-import eliot
 import datetime
 from eliot_profiler_analysis.database import Database, extract_attribs, OLDEST
-from pprint import pprint
 from pytz import utc
-
-
-def match_object(target, pattern):
-    if isinstance(pattern, dict):
-        return all(key in target and match_object(target[key], value)
-                   for key, value in pattern.items())
-    if isinstance(pattern, list):
-        return (len(target) == len(pattern)
-                and all(match_object(t, p) for t, p in zip(target, pattern)))
-    else:
-        return pattern == target
+from .util import TestLogDestination
 
 
 def dt(*args, **kwargs):
     return utc.localize(datetime.datetime(*args, **kwargs))
-
-
-class TestLogDestination(object):
-    def __init__(self):
-        self.messages = []
-
-    def __call__(self, message):
-        self.messages.append(message)
-
-    def __enter__(self):
-        eliot.add_destination(self)
-        return self
-
-    def __exit__(self, typ_, exc, tb):
-        if exc:
-            pprint(self.messages)
-        eliot.remove_destination(self)
-
-    def assertMessage(self, **kwargs):
-        try:
-            assert any(match_object(m, kwargs) for m in self.messages)
-        except:
-            print('{kwargs} not found among messages: {self.messages}'
-                  .format(**locals()))
-            raise
 
 
 class DatabaseTest(unittest.TestCase):
@@ -123,7 +87,6 @@ class DatabaseTest(unittest.TestCase):
                               self.instance.attrib_values('further_field'))
 
 class TestSearch(unittest.TestCase):
-    maxDiff=None
     def assertMessage(self, **kwargs):
         self.logs.assertMessage(**kwargs)
 

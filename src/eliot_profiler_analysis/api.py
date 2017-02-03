@@ -41,7 +41,7 @@ def api(db):
         with eliot.start_action(action_type='api:insert-data') as action:
             instream = make_line_iter(get_input_stream(environ))
             lines = (json.loads(line.decode('utf-8')) for line in instream)
-            keys = [key.decode('utf-8') for key in db.insert(lines)]
+            keys = db.insert(lines)
             action.add_success_fields(inserted_count=len(keys))
             return {'message': 'Inserted OK', 'keys': keys}
 

@@ -1,4 +1,3 @@
-from __future__ import print_function
 import unittest
 import sys
 from werkzeug.test import Client
@@ -45,4 +44,4 @@ class ReturnsJsonTest(unittest.TestCase):
                 start_response('503 Service Unavailable', [], sys.exc_info())
         client = Client(app, Response)
         with self.assertRaises(ZeroDivisionError):
-            response = client.get('/')
+            client.get('/')
