@@ -137,6 +137,8 @@ class Database(object):
             raise ValueError(
                 "_order must be 'newest' or 'oldest' - found {!r}".format(
                     _order))
+        if _start_record is not None:
+            _start_record = _start_record.encode('utf-8')
         with self._env.begin() as txn:
 
             def all_ascending():
@@ -311,32 +313,33 @@ class Database(object):
                     raise StopIteration
                 index_entries = map(get_index_key, term_query_order)
                 primary_index = index_entries[0]
+                index_unicode = primary_index.decode('utf-8')
                 if _order == NEWEST:
                     if _start_record is not None:
                         stream = indexed_descending_start_record(primary_index)
                         logged_query_plan.append(
-                            ('indexed_descending_start_record', primary_index))
+                            ('indexed_descending_start_record', index_unicode))
                     elif _end_time is not None:
                         stream = indexed_descending_end_time(primary_index)
                         logged_query_plan.append(
-                            ('indexed_descending_end_time', primary_index))
+                            ('indexed_descending_end_time', index_unicode))
                     else:
                         stream = indexed_descending(primary_index)
                         logged_query_plan.append(
-                            ('indexed_descending', primary_index))
+                            ('indexed_descending', index_unicode))
                 else:
                     if _start_record is not None:
                         stream = indexed_ascending_start_record(primary_index)
                         logged_query_plan.append(
-                            ('indexed_ascending_start_record', primary_index))
+                            ('indexed_ascending_start_record', index_unicode))
                     elif _start_time is not None:
                         stream = indexed_ascending_start_time(primary_index)
                         logged_query_plan.append(
-                            ('indexed_ascending_start_time', primary_index))
+                            ('indexed_ascending_start_time', index_unicode))
                     else:
                         stream = indexed_ascending(primary_index)
                         logged_query_plan.append(
-                            ('indexed_ascending', primary_index))
+                            ('indexed_ascending', index_unicode))
 
             if _order == NEWEST and _start_time is not None:
                 stream = stop_time_descending(stream)
@@ -348,7 +351,8 @@ class Database(object):
             if terms:
                 for index_entry in index_entries[1:]:
                     stream = filter_index(index_entry, stream)
-                    logged_query_plan.append(('filter_index', index_entry))
+                    logged_query_plan.append(
+                        ('filter_index', index_entry.decode('utf-8')))
                 stream = materialize(stream)
                 logged_query_plan.append('materialize')
 
