@@ -57,11 +57,11 @@ OLDEST = 'oldest'
 
 
 def _key_time(key):
-    return parse_date(key.split(b'~')[0])
+    return parse_date(key.split(b'~',1)[0])
 
 
 def _format_time(timestamp):
-    return utc.normalize(timestamp).isoformat()
+    return utc.normalize(timestamp).isoformat().encode('utf-8')
 
 
 def attrib_index_key(key, value):
@@ -83,11 +83,12 @@ class Database(object):
         with self._env.begin(write=True) as txn:
             for item in items:
                 start_time = _format_time(parse_date(item['start_time']))
-                item_key_unicode = (
-                    u'{start_time}~{item[task_uuid]}~{item[source]}~{item[thread]}'
-                    .format(
-                        item=item, start_time=start_time))
-                item_key = item_key_unicode.encode('utf-8')
+                item_key = b'~'.join([
+                    start_time,
+                    item['task_uuid'].encode('utf-8'),
+                    item['source'].encode('utf-8'),
+                    str(item['thread']).encode('utf-8')
+                ])
                 txn.put(item_key,
                         json.dumps(item).encode('utf-8'),
                         db=self._master_db)
@@ -98,7 +99,7 @@ class Database(object):
 
                     attrib_full = attrib_index_key(attrib_key, attrib_val)
                     txn.put(attrib_full, item_key, db=self._attr_index_db)
-                yield item_key_unicode
+                yield item_key.decode('utf-8')
 
     def get(self, key):
         with self._env.begin() as txn:
@@ -272,7 +273,7 @@ class Database(object):
                     result = {}
                     success = cursor.first()
                     while success:
-                        result[cursor.key()] = cursor.count()
+                        result[cursor.key().decode('utf-8')] = cursor.count()
                         success = cursor.next_nodup()
                     return result
 
@@ -311,7 +312,7 @@ class Database(object):
                         reverse=True)
                 except KeyError:
                     raise StopIteration
-                index_entries = map(get_index_key, term_query_order)
+                index_entries = list(map(get_index_key, term_query_order))
                 primary_index = index_entries[0]
                 index_unicode = primary_index.decode('utf-8')
                 if _order == NEWEST:
