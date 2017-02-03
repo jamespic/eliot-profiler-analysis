@@ -1,4 +1,3 @@
-import datetime
 import eliot
 import json
 import lmdb
@@ -47,6 +46,7 @@ def extract_attribs(item):
         else:
             yield u'message', value
 
+
 @decorator
 def unyield(wrapped, instance, args, kwargs):
     return list(wrapped(*args, **kwargs))
@@ -57,15 +57,23 @@ OLDEST = 'oldest'
 
 
 def _key_time(key):
-    return parse_date(key.split(b'~',1)[0])
+    return parse_date(key.split(b'~', 1)[0])
 
 
 def _format_time(timestamp):
-    return utc.normalize(timestamp).isoformat().encode('utf-8')
+    return utc.normalize(timestamp).isoformat()
 
 
 def attrib_index_key(key, value):
-    return key + b'=' + value
+    return key + u'=' + value
+
+
+def e(bytes_):
+    return bytes_.encode('utf-8')
+
+
+def d(unicode_):
+    return unicode_.decode('utf-8')
 
 
 class Database(object):
@@ -83,30 +91,28 @@ class Database(object):
         with self._env.begin(write=True) as txn:
             for item in items:
                 start_time = _format_time(parse_date(item['start_time']))
-                item_key = b'~'.join([
+                item_key = u'~'.join([
                     start_time,
-                    item['task_uuid'].encode('utf-8'),
-                    item['source'].encode('utf-8'),
-                    str(item['thread']).encode('utf-8')
+                    item['task_uuid'],
+                    item['source'],
+                    str(item['thread'])
                 ])
-                txn.put(item_key,
-                        json.dumps(item).encode('utf-8'),
+                txn.put(e(item_key),
+                        e(json.dumps(item)),
                         db=self._master_db)
                 for attrib_key, attrib_val in extract_attribs(item):
-                    attrib_key = attrib_key.encode('utf-8')
-                    attrib_val = attrib_val.encode('utf-8')
-                    txn.put(attrib_key, attrib_val, db=self._attr_value_db)
+                    txn.put(e(attrib_key), e(attrib_val), db=self._attr_value_db)
 
                     attrib_full = attrib_index_key(attrib_key, attrib_val)
-                    txn.put(attrib_full, item_key, db=self._attr_index_db)
-                yield item_key.decode('utf-8')
+                    txn.put(e(attrib_full), e(item_key), db=self._attr_index_db)
+                yield item_key
 
     def get(self, key):
         with self._env.begin() as txn:
-            value = txn.get(key.encode('utf-8'), db=self._master_db)
+            value = txn.get(e(key), db=self._master_db)
             if value is None:
                 return value
-            return json.loads(value.decode('utf-8'))
+            return json.loads(d(value))
 
     @unyield
     def attrib_names(self):
@@ -114,16 +120,16 @@ class Database(object):
             with txn.cursor(db=self._attr_value_db) as cursor:
                 success = cursor.first()
                 while success:
-                    yield cursor.key().decode('utf-8')
+                    yield d(cursor.key())
                     success = cursor.next_nodup()
 
     @unyield
     def attrib_values(self, attrib_key):
         with self._env.begin() as txn:
             with txn.cursor(db=self._attr_value_db) as cursor:
-                success = cursor.set_key(attrib_key.encode('utf-8'))
+                success = cursor.set_key(e(attrib_key))
                 while success:
-                    yield cursor.value().decode('utf-8')
+                    yield d(cursor.value())
                     success = cursor.next_dup()
 
     @unyield
@@ -138,8 +144,6 @@ class Database(object):
             raise ValueError(
                 "_order must be 'newest' or 'oldest' - found {!r}".format(
                     _order))
-        if _start_record is not None:
-            _start_record = _start_record.encode('utf-8')
         with self._env.begin() as txn:
 
             def all_ascending():
@@ -151,14 +155,14 @@ class Database(object):
 
             def all_ascending_start_time():
                 with txn.cursor(self._master_db) as cursor:
-                    success = cursor.set_range(_format_time(_start_time))
+                    success = cursor.set_range(e(_format_time(_start_time)))
                     while success:
                         yield cursor.item()
                         success = cursor.next()
 
             def all_ascending_start_record():
                 with txn.cursor(self._master_db) as cursor:
-                    success = cursor.set_key(_start_record) and cursor.next()
+                    success = cursor.set_key(e(_start_record)) and cursor.next()
                     while success:
                         yield cursor.item()
                         success = cursor.next()
@@ -173,29 +177,29 @@ class Database(object):
             def all_descending_end_time():
                 with txn.cursor(self._master_db) as cursor:
                     success = cursor.prev() if cursor.set_range(
-                        _format_time(_end_time)) else cursor.last()
+                        e(_format_time(_end_time))) else cursor.last()
                     while success:
                         yield cursor.item()
                         success = cursor.prev()
 
             def all_descending_start_record():
                 with txn.cursor(self._master_db) as cursor:
-                    success = cursor.set_key(_start_record) and cursor.prev()
+                    success = cursor.set_key(e(_start_record)) and cursor.prev()
                     while success:
                         yield cursor.item()
                         success = cursor.prev()
 
             def indexed_ascending(index_entry):
                 with txn.cursor(self._attr_index_db) as cursor:
-                    success = cursor.set_key(index_entry)
+                    success = cursor.set_key(e(index_entry))
                     while success:
                         yield cursor.value(), ()
                         success = cursor.next_dup()
 
             def indexed_ascending_start_time(index_entry):
                 with txn.cursor(self._attr_index_db) as cursor:
-                    success = cursor.set_range_dup(index_entry,
-                                                   _format_time(_start_time))
+                    success = cursor.set_range_dup(e(index_entry),
+                                                   e(_format_time(_start_time)))
                     while success:
                         yield cursor.value(), ()
                         success = cursor.next_dup()
@@ -203,14 +207,14 @@ class Database(object):
             def indexed_ascending_start_record(index_entry):
                 with txn.cursor(self._attr_index_db) as cursor:
                     success = cursor.set_key_dup(
-                        index_entry, _start_record) and cursor.next_dup()
+                        e(index_entry), e(_start_record)) and cursor.next_dup()
                     while success:
                         yield cursor.value(), ()
                         success = cursor.next_dup()
 
             def indexed_descending(index_entry):
                 with txn.cursor(self._attr_index_db) as cursor:
-                    success = cursor.set_key(index_entry) and cursor.last_dup()
+                    success = cursor.set_key(e(index_entry)) and cursor.last_dup()
                     while success:
                         yield cursor.value(), ()
                         success = cursor.prev_dup()
@@ -218,9 +222,9 @@ class Database(object):
             def indexed_descending_end_time(index_entry):
                 with txn.cursor(self._attr_index_db) as cursor:
                     success = cursor.prev_dup() if cursor.set_range_dup(
-                        index_entry,
-                        _format_time(_end_time)) else cursor.set_key(
-                            index_entry) and cursor.last_dup()
+                        e(index_entry),
+                        e(_format_time(_end_time))) else cursor.set_key(
+                            e(index_entry)) and cursor.last_dup()
                     while success:
                         yield cursor.value(), ()
                         success = cursor.prev_dup()
@@ -228,7 +232,7 @@ class Database(object):
             def indexed_descending_start_record(index_entry):
                 with txn.cursor(self._attr_index_db) as cursor:
                     success = cursor.set_key_dup(
-                        index_entry, _start_record) and cursor.prev_dup()
+                        e(index_entry), e(_start_record)) and cursor.prev_dup()
                     while success:
                         yield cursor.value(), ()
                         success = cursor.prev_dup()
@@ -253,7 +257,7 @@ class Database(object):
                 with closing(stream), txn.cursor(
                         self._attr_index_db) as cursor:
                     for key, value in stream:
-                        if cursor.set_key_dup(index_entry, key):
+                        if cursor.set_key_dup(e(index_entry), key):
                             yield key, value
 
             def stop_count(stream):
@@ -273,13 +277,12 @@ class Database(object):
                     result = {}
                     success = cursor.first()
                     while success:
-                        result[cursor.key().decode('utf-8')] = cursor.count()
+                        result[d(cursor.key())] = cursor.count()
                         success = cursor.next_nodup()
                     return result
 
             def get_index_key(attrib):
-                return attrib_index_key(
-                    attrib.encode('utf-8'), terms[attrib].encode('utf-8'))
+                return attrib_index_key(attrib, terms[attrib])
 
             logged_query_plan = []
             if not terms:
@@ -314,33 +317,32 @@ class Database(object):
                     raise StopIteration
                 index_entries = list(map(get_index_key, term_query_order))
                 primary_index = index_entries[0]
-                index_unicode = primary_index.decode('utf-8')
                 if _order == NEWEST:
                     if _start_record is not None:
                         stream = indexed_descending_start_record(primary_index)
                         logged_query_plan.append(
-                            ('indexed_descending_start_record', index_unicode))
+                            ('indexed_descending_start_record', primary_index))
                     elif _end_time is not None:
                         stream = indexed_descending_end_time(primary_index)
                         logged_query_plan.append(
-                            ('indexed_descending_end_time', index_unicode))
+                            ('indexed_descending_end_time', primary_index))
                     else:
                         stream = indexed_descending(primary_index)
                         logged_query_plan.append(
-                            ('indexed_descending', index_unicode))
+                            ('indexed_descending', primary_index))
                 else:
                     if _start_record is not None:
                         stream = indexed_ascending_start_record(primary_index)
                         logged_query_plan.append(
-                            ('indexed_ascending_start_record', index_unicode))
+                            ('indexed_ascending_start_record', primary_index))
                     elif _start_time is not None:
                         stream = indexed_ascending_start_time(primary_index)
                         logged_query_plan.append(
-                            ('indexed_ascending_start_time', index_unicode))
+                            ('indexed_ascending_start_time', primary_index))
                     else:
                         stream = indexed_ascending(primary_index)
                         logged_query_plan.append(
-                            ('indexed_ascending', index_unicode))
+                            ('indexed_ascending', primary_index))
 
             if _order == NEWEST and _start_time is not None:
                 stream = stop_time_descending(stream)
@@ -352,8 +354,7 @@ class Database(object):
             if terms:
                 for index_entry in index_entries[1:]:
                     stream = filter_index(index_entry, stream)
-                    logged_query_plan.append(
-                        ('filter_index', index_entry.decode('utf-8')))
+                    logged_query_plan.append(('filter_index', index_entry))
                 stream = materialize(stream)
                 logged_query_plan.append('materialize')
 
@@ -363,7 +364,7 @@ class Database(object):
 
             eliot.Message.new(query_plan=logged_query_plan).write()
             for key, value in stream:
-                yield key.decode('utf-8'), json.loads(value.decode('utf-8'))
+                yield d(key), json.loads(d(value))
 
     def close(self):
         self._env.close()
