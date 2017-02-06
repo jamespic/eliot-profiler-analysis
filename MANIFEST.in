@@ -1,3 +1,4 @@
+recursive-include src *.elm
 graft src/eliot_profiler_analysis/static
 # added by check_manifest.py
 include *.md

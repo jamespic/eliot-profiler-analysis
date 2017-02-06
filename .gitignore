@@ -87,3 +87,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Elm stuff
+elm-stuff/
+
+# Elm output
+/src/eliot_profiler_analysis/static/main.js
