@@ -1,0 +1,47 @@
+{
+  "name": "eliot-profiler-analysis",
+  "version": "0.1.0",
+  "description": "An analysis tool for eliot-profiler",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jamespic/eliot-profiler-analysis.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jamespic/eliot-profiler-analysis/issues"
+  },
+  "homepage": "https://github.com/jamespic/eliot-profiler-analysis#readme",
+  "devDependencies": {
+    "babel-core": "^6.22.1",
+    "babel-loader": "^6.2.10",
+    "babel-plugin-jsx": "^1.2.0",
+    "babel-plugin-transform-react-jsx": "^6.22.0",
+    "babel-preset-env": "^1.1.8",
+    "babel-preset-latest": "^6.22.0",
+    "babel-preset-stage-3": "^6.22.0",
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
+    "webpack": "^2.2.1"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.22.0",
+    "babel-preset-stage-2": "^6.22.0",
+    "deku": "^2.0.0-rc16",
+    "isomorphic-fetch": "^2.2.1",
+    "lodash": "^4.17.4",
+    "page": "^1.7.1",
+    "redux": "^3.6.0",
+    "redux-actions": "^1.2.1",
+    "redux-effex": "^1.1.2",
+    "redux-seamless-immutable": "^0.3.0",
+    "seamless-immutable": "^7.0.1"
+  }
+}

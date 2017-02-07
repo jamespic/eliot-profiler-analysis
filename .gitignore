@@ -87,3 +87,10 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Node modules
+node_modules/
+
+# Webpack outputs
+/src/eliot_profiler_analysis/static/bundle.js
+/src/eliot_profiler_analysis/static/bundle.js.map

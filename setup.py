@@ -1,8 +1,13 @@
 #!/usr/bin/env python
-
-
+from subprocess import check_call
 from setuptools import setup, find_packages
+from setuptools.command.sdist import sdist as _sdist
 
+
+class sdist(_sdist):
+    def run(self):
+        check_call(['webpack'])
+        _sdist.run(self)
 
 setup(
     name='Eliot Profiler Analysis',
@@ -24,5 +29,6 @@ setup(
         'pytz',
         'cheroot>=5.1.0'
     ],
-    test_suite='tests'
+    test_suite='tests',
+    cmdclass={'sdist': sdist}
 )
