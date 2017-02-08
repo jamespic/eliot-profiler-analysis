@@ -16,15 +16,12 @@ const store = createStore(
 
 const render = createApp(document.getElementById('main'), store.dispatch)
 
-function Router({context: {lastNavigation}}) {
-  switch (lastNavigation.type) {
-    case 'NAVIGATE_VIEW_PROFILE':
-      return <ViewProfile profileId={lastNavigation.payload} />
-    case 'NAVIGATE_SEARCH':
-      return <ViewSearch />
-    default:
-      return <h1>Err.. I'm lost</h1>
+function Router ({context: {lastNavigation}}) {
+  let routes = {
+    [navigateSearch]: () => <ViewSearch />,
+    [navigateViewProfile]: () => <ViewProfile profileId={lastNavigation.payload} />
   }
+  return routes[lastNavigation]()
 }
 
 store.subscribe(() => render(<Router />, store.getState()))

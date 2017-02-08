@@ -1,0 +1,30 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "standard",
+    "standard-jsx"
+  ],
+  "parser": "babel-eslint",
+  "env": {
+    "browser": true,
+    "mocha": true
+  },
+  "plugins": [
+    "babel",
+    "standard",
+    "react"
+  ],
+  "rules": {
+    "babel/generator-star-spacing": [2, { "before": true, "after": true }],
+    "babel/new-cap": [2, { "newIsCap": true, "capIsNew": false }],
+    "babel/func-params-comma-dangle": [2, "never"],
+
+    "generator-star-spacing": 0,
+    "new-cap": 0
+  },
+  "settings": {
+    "react": {
+      "pragma": "element"
+    }
+  }
+}
