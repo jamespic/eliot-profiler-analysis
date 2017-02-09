@@ -1,13 +1,29 @@
 'use strict'
 import {element} from './deku-seamless-immutable'
 import {Actions} from './actions'
-import {stripMessageBarriers, selfGraph} from './callgraph-helpers'
+import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, selfGraph} from './callgraph-helpers'
 import _ from 'lodash'
 
 export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {
   if (!data) return <h1>Loading...</h1>
-  else if (bottomUp) return <BottomUpCallGraph callGraph={selfGraph(stripMessageBarriers(data))} totalTime={data.time} />
-  else return <ul><CallGraph callGraph={stripMessageBarriers(data)} totalTime={data.time} /></ul>
+  switch (flatten) {
+    case 'strip_messages':
+      data = stripMessageBarriers(data)
+      break
+    case 'line':
+      data = stripMessageBarriers(data, flattenByLine)
+      break
+    case 'method':
+      data = stripMessageBarriers(data, flattenByMethod)
+      break
+    case 'file':
+      data = stripMessageBarriers(data, flattenByFile)
+      break
+    default:
+      // pass
+  }
+  if (bottomUp) return <BottomUpCallGraph callGraph={selfGraph(data)} totalTime={data.time} />
+  else return <ul><CallGraph callGraph={data} totalTime={data.time} /></ul>
 }
 
 export function ViewSearch ({props: {params}}) {

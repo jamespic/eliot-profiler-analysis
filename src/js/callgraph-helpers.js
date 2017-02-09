@@ -1,22 +1,24 @@
+'use strict'
 import {defaultMemoize} from 'reselect'
 
 export const selfGraph = defaultMemoize(function selfGraph (callGraph) {
-  var keyedGraph = {}
+  let keyedGraph = {}
   function addToGraph (parentPath, child) {
-    var newPath = parentPath
+    let newPath = parentPath
     if (child.instruction) {
       newPath = parentPath.concat([child.instruction])
-      var selfTime = child.self_time
-      var subGraph = keyedGraph
-      newPath.reverse().forEach(function(instruction) {
-        var graphNode = subGraph[instruction]
+      let selfTime = child.self_time
+      let subGraph = keyedGraph
+      for (let i = newPath.length - 1; i >= 0; --i) {
+        let instruction = newPath[i]
+        let graphNode = subGraph[instruction]
         if (!graphNode) {
           graphNode = {self_time: 0, callers: {}}
           subGraph[instruction] = graphNode
         }
         graphNode.self_time += selfTime
         subGraph = graphNode.callers
-      })
+      }
     }
     if (child.children) {
       child.children.forEach(function (subchild) {
@@ -28,8 +30,8 @@ export const selfGraph = defaultMemoize(function selfGraph (callGraph) {
 
   function sortSelfGraph (selfGraph) {
     var newGraph = []
-    for (var key in selfGraph) {
-      var item = selfGraph[key]
+    for (let key in selfGraph) {
+      let item = selfGraph[key]
       item.instruction = key
       item.callers = sortSelfGraph(item.callers)
       newGraph.push(selfGraph[key])
@@ -41,13 +43,18 @@ export const selfGraph = defaultMemoize(function selfGraph (callGraph) {
   return sortSelfGraph(keyedGraph)
 })
 
-export const stripMessageBarriers = defaultMemoize(function stripMessageBarriers (callGraph) {
+
+export const stripMessageBarriers = defaultMemoize(function stripMessageBarriers (callGraph, flatten) {
   var result = Object.assign({}, callGraph)
+  if (result.instruction && flatten) result.instruction = flatten(result.instruction)
   var newChildren = []
-  if (callGraph.children != null) {
-    callGraph.children.forEach((child) => {
-      if (child.message == null) {
-        var match = newChildren.find(m => m.instruction === child.instruction)
+  function visitChild (child) {
+    if (child.message == null) {
+      if (child.instruction && flatten && flatten(child.instruction) === result.instruction) {
+        result.self_time += child.self_time
+        if (child.children) child.children.forEach(visitChild)
+      } else {
+        let match = newChildren.find(m => m.instruction === child.instruction)
         if (match) {
           match.self_time += child.self_time
           match.time += child.time
@@ -59,8 +66,20 @@ export const stripMessageBarriers = defaultMemoize(function stripMessageBarriers
           newChildren.push(newChild)
         }
       }
-    })
+    }
   }
-  result.children = newChildren.map(stripMessageBarriers)
+  if (callGraph.children != null) {
+    callGraph.children.forEach(visitChild)
+  }
+  result.children = newChildren.map(child => stripMessageBarriers(child, flatten))
   return result
 })
+
+export function flattenByLine (instruction) { return instruction }
+// FIXME: This will break for files with colons
+export function flattenByMethod (instruction) {
+  return instruction.split(':').slice(0, 2).join(':')
+}
+export function flattenByFile (instruction) {
+  return instruction.split(':')[0]
+}

@@ -36,11 +36,11 @@ function Router ({context: {lastNavigation, profiles}}) {
 store.subscribe(() => render(<Router />, store.getState()))
 
 page('/view/:profileId', (context, next) => {
-  store.dispatch(Actions.NAVIGATE_VIEW_PROFILE(context.params.profileId))
+  store.dispatch(Actions.NAVIGATE_VIEW_PROFILE(context.params.profileId, false, context.hash))
   next()
 })
 page('/view/:profileId/bottomUp', (context, next) => {
-  store.dispatch(Actions.NAVIGATE_VIEW_PROFILE(context.params.profileId, true))
+  store.dispatch(Actions.NAVIGATE_VIEW_PROFILE(context.params.profileId, true, context.hash))
   next()
 })
 page('/search', (context, next) => {
