@@ -20,12 +20,14 @@ const store = createStore(
 
 const render = createApp(document.getElementById('main'), store.dispatch)
 
-function Router ({context: {lastNavigation}}) {
+function Router ({context: {lastNavigation, profiles}}) {
   switch (lastNavigation.type) {
     case Constants.NAVIGATE_SEARCH:
       return <ViewSearch params={lastNavigation.payload}/>
-    case Constants.NAVIGATE_VIEW_PROFILE:
-      return <ViewProfile profileId={lastNavigation.payload} />
+    case Constants.NAVIGATE_VIEW_PROFILE: {
+      let profileId = lastNavigation.payload
+      return <ViewProfile profileId={profileId} data={profiles.results[profileId]} />
+    }
     default:
       return <h1>Loading...</h1>
   }

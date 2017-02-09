@@ -1,6 +1,8 @@
-exports.selfGraph = function selfGraph(callGraph) {
+import Immutable from 'seamless-immutable'
+
+export function selfGraph (callGraph) {
   var keyedGraph = {}
-  function addToGraph(parentPath, child) {
+  function addToGraph (parentPath, child) {
     var newPath = parentPath
     if (child.instruction) {
       newPath = parentPath.concat([child.instruction])
@@ -17,14 +19,14 @@ exports.selfGraph = function selfGraph(callGraph) {
       })
     }
     if (child.children) {
-      child.children.forEach(function(subchild) {
+      child.children.forEach(function (subchild) {
         addToGraph(newPath, subchild)
       })
     }
   }
   addToGraph([], callGraph)
 
-  function sortSelfGraph(selfGraph) {
+  function sortSelfGraph (selfGraph) {
     var newGraph = []
     for (var key in selfGraph) {
       var item = selfGraph[key]
@@ -39,11 +41,11 @@ exports.selfGraph = function selfGraph(callGraph) {
   return sortSelfGraph(keyedGraph)
 }
 
-exports.stripMessageBarriers = function stripMessageBarriers(callGraph) {
+export function stripMessageBarriers (callGraph) {
   var result = Object.assign({}, callGraph)
   var newChildren = []
   if (callGraph.children != null) {
-    callGraph.children.forEach((child, i) => {
+    callGraph.children.forEach((child) => {
       if (child.message == null) {
         var match = newChildren.find(m => m.instruction === child.instruction)
         if (match) {
