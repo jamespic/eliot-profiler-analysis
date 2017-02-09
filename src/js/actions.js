@@ -1,21 +1,30 @@
 'use strict'
-import EasyActions from 'redux-easy-actions'
 import Immutable from 'seamless-immutable'
 
-export const {Actions, Constants} = EasyActions({
-  RECEIVE_SEARCH_RESULTS (type, params, results) {
-    return Immutable({type, payload: {params, results}})
+export const Actions = {
+  RECEIVE_SEARCH_RESULTS(params, results) {
+    return {params, results}
   },
-  RECEIVE_PROFILE_DATA (type, profileId, data) {
-    return Immutable({type, payload: {profileId, data}})
+  RECEIVE_PROFILE_DATA(profileId, data) {
+    return {profileId, data}
   },
-  NAVIGATE_VIEW_PROFILE (type, profileId, bottomUp=false, flatten) {
-    return Immutable({type, payload: {profileId, bottomUp, flatten}})
+  NAVIGATE_VIEW_PROFILE(profileId, bottomUp=false, flatten) {
+    return {profileId, bottomUp, flatten}
   },
-  NAVIGATE_SEARCH (type, params) {
-    return Immutable({type, payload: params})
+  NAVIGATE_SEARCH(params) {
+    return params
   },
-  TOGGLE_CALL_GRAPH_NODE (type, path) {
-    return Immutable({type, payload: path})
+  TOGGLE_CALL_GRAPH_NODE(path) {
+    return path
   }
-})
+}
+
+export const Constants = {}
+
+for (let action in Actions) {
+  let currentAction = Actions[action]
+  Actions[action] = function() {
+    return Immutable({type: action, payload: currentAction.apply(this, arguments)})
+  }
+  Constants[action] = action
+}
