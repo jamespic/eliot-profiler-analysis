@@ -43,18 +43,18 @@ export const selfGraph = defaultMemoize(function selfGraph (callGraph) {
   return sortSelfGraph(keyedGraph)
 })
 
-
 export const stripMessageBarriers = defaultMemoize(function stripMessageBarriers (callGraph, flatten) {
   var result = Object.assign({}, callGraph)
   if (result.instruction && flatten) result.instruction = flatten(result.instruction)
   var newChildren = []
   function visitChild (child) {
     if (child.message == null) {
-      if (child.instruction && flatten && flatten(child.instruction) === result.instruction) {
+      if (flatten && (!child.instruction || flatten(child.instruction) === result.instruction)) {
         result.self_time += child.self_time
         if (child.children) child.children.forEach(visitChild)
       } else {
-        let match = newChildren.find(m => m.instruction === child.instruction)
+        let flattenedInstruction = flatten ? flatten(child.instruction) : child.instruction
+        let match = newChildren.find(m => m.instruction === flattenedInstruction)
         if (match) {
           match.self_time += child.self_time
           match.time += child.time
@@ -63,6 +63,7 @@ export const stripMessageBarriers = defaultMemoize(function stripMessageBarriers
           if (child.children != null) match.children = (match.children || []).concat(child.children)
         } else {
           var newChild = Object.assign({}, child)
+          newChild.instruction = flattenedInstruction
           newChildren.push(newChild)
         }
       }

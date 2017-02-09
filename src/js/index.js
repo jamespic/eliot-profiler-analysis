@@ -6,9 +6,9 @@ import Immutable from 'seamless-immutable'
 import {effectsMiddleware} from 'redux-effex'
 import {combineReducers} from 'redux-seamless-immutable'
 import {parse} from 'query-string'
-import {Actions, Constants} from './actions'
+import {Actions} from './actions'
 import * as reducers from './reducers'
-import {ViewProfile, ViewSearch} from './views'
+import {Router} from './views'
 import Effects from './effects'
 
 const composeEnhancers = ((typeof window !== 'undefined') && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) || compose
@@ -19,19 +19,6 @@ const store = createStore(
 )
 
 const render = createApp(document.getElementById('main'), store.dispatch)
-
-function Router ({context: {lastNavigation, profiles}}) {
-  switch (lastNavigation.type) {
-    case Constants.NAVIGATE_SEARCH:
-      return <ViewSearch params={lastNavigation.payload}/>
-    case Constants.NAVIGATE_VIEW_PROFILE: {
-      let {profileId, bottomUp, flatten} = lastNavigation.payload
-      return <ViewProfile profileId={profileId} data={profiles.results[profileId]} bottomUp={bottomUp} flatten={flatten}/>
-    }
-    default:
-      return <h1>Loading...</h1>
-  }
-}
 
 store.subscribe(() => render(<Router />, store.getState()))
 

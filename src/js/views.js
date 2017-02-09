@@ -1,8 +1,25 @@
 'use strict'
 import {element} from './deku-seamless-immutable'
-import {Actions} from './actions'
+import {Actions, Constants} from './actions'
 import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, selfGraph} from './callgraph-helpers'
 import _ from 'lodash'
+
+export function Router ({context: {lastNavigation, profiles}}) {
+  switch (lastNavigation.type) {
+    case Constants.NAVIGATE_SEARCH:
+      return <ViewSearch params={lastNavigation.payload}/>
+    case Constants.NAVIGATE_VIEW_PROFILE: {
+      let {profileId, bottomUp, flatten} = lastNavigation.payload
+      return <ViewProfile profileId={profileId} data={profiles.results[profileId]} bottomUp={bottomUp} flatten={flatten}/>
+    }
+    default:
+      return <h1>Loading...</h1>
+  }
+}
+
+export function ViewSearch ({props: {params}}) {
+  return <h1>Searching for {JSON.stringify(params)}</h1>
+}
 
 export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {
   if (!data) return <h1>Loading...</h1>
@@ -24,10 +41,6 @@ export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {
   }
   if (bottomUp) return <BottomUpCallGraph callGraph={selfGraph(data)} totalTime={data.time} />
   else return <ul><CallGraph callGraph={data} totalTime={data.time} /></ul>
-}
-
-export function ViewSearch ({props: {params}}) {
-  return <h1>Searching for {JSON.stringify(params)}</h1>
 }
 
 export function CallGraph ({props: {callGraph, totalTime}, context: {expandedCallGraphNodes}, path, dispatch}) {
