@@ -52,6 +52,7 @@
     "redux-easy-actions": "^0.4.0",
     "redux-effex": "^1.1.2",
     "redux-seamless-immutable": "^0.3.0",
+    "reselect": "^2.5.4",
     "seamless-immutable": "^7.0.1"
   }
 }

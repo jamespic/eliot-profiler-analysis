@@ -9,8 +9,8 @@ export const {Actions, Constants} = EasyActions({
   RECEIVE_PROFILE_DATA (type, profileId, data) {
     return Immutable({type, payload: {profileId, data}})
   },
-  NAVIGATE_VIEW_PROFILE (type, profileId) {
-    return Immutable({type, payload: profileId})
+  NAVIGATE_VIEW_PROFILE (type, profileId, bottomUp=false, flatten) {
+    return Immutable({type, payload: {profileId, bottomUp, flatten}})
   },
   NAVIGATE_SEARCH (type, params) {
     return Immutable({type, payload: params})

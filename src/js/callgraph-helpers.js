@@ -1,6 +1,6 @@
-import Immutable from 'seamless-immutable'
+import {defaultMemoize} from 'reselect'
 
-export function selfGraph (callGraph) {
+export const selfGraph = defaultMemoize(function selfGraph (callGraph) {
   var keyedGraph = {}
   function addToGraph (parentPath, child) {
     var newPath = parentPath
@@ -11,11 +11,11 @@ export function selfGraph (callGraph) {
       newPath.reverse().forEach(function(instruction) {
         var graphNode = subGraph[instruction]
         if (!graphNode) {
-          graphNode = {self_time: 0, children: {}}
+          graphNode = {self_time: 0, callers: {}}
           subGraph[instruction] = graphNode
         }
         graphNode.self_time += selfTime
-        subGraph = graphNode.children
+        subGraph = graphNode.callers
       })
     }
     if (child.children) {
@@ -31,7 +31,7 @@ export function selfGraph (callGraph) {
     for (var key in selfGraph) {
       var item = selfGraph[key]
       item.instruction = key
-      item.children = sortSelfGraph(item.children)
+      item.callers = sortSelfGraph(item.callers)
       newGraph.push(selfGraph[key])
     }
     newGraph.sort((a, b) => b.self_time - a.self_time)
@@ -39,9 +39,9 @@ export function selfGraph (callGraph) {
   }
 
   return sortSelfGraph(keyedGraph)
-}
+})
 
-export function stripMessageBarriers (callGraph) {
+export const stripMessageBarriers = defaultMemoize(function stripMessageBarriers (callGraph) {
   var result = Object.assign({}, callGraph)
   var newChildren = []
   if (callGraph.children != null) {
@@ -63,4 +63,4 @@ export function stripMessageBarriers (callGraph) {
   }
   result.children = newChildren.map(stripMessageBarriers)
   return result
-}
+})

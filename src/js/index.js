@@ -25,8 +25,8 @@ function Router ({context: {lastNavigation, profiles}}) {
     case Constants.NAVIGATE_SEARCH:
       return <ViewSearch params={lastNavigation.payload}/>
     case Constants.NAVIGATE_VIEW_PROFILE: {
-      let profileId = lastNavigation.payload
-      return <ViewProfile profileId={profileId} data={profiles.results[profileId]} />
+      let {profileId, bottomUp, flatten} = lastNavigation.payload
+      return <ViewProfile profileId={profileId} data={profiles.results[profileId]} bottomUp={bottomUp} flatten={flatten}/>
     }
     default:
       return <h1>Loading...</h1>
@@ -37,6 +37,10 @@ store.subscribe(() => render(<Router />, store.getState()))
 
 page('/view/:profileId', (context, next) => {
   store.dispatch(Actions.NAVIGATE_VIEW_PROFILE(context.params.profileId))
+  next()
+})
+page('/view/:profileId/bottomUp', (context, next) => {
+  store.dispatch(Actions.NAVIGATE_VIEW_PROFILE(context.params.profileId, true))
   next()
 })
 page('/search', (context, next) => {

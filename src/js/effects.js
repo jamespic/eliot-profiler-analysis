@@ -6,7 +6,7 @@ import Immutable from 'seamless-immutable'
 import _ from 'lodash'
 
 
-export async function searchEffect({action: {payload: params}, dispatch, getState}) {
+export async function searchEffect ({action: {payload: params}, dispatch, getState}) {
   let {profiles: {search}} = getState()
   if (!_.isEqual(params, search)) {
     params = Immutable(params).set('_count', 100)
@@ -16,7 +16,7 @@ export async function searchEffect({action: {payload: params}, dispatch, getStat
   }
 }
 
-export async function viewEffect({action: {payload: profileId}, dispatch, getState}) {
+export async function viewEffect ({action: {payload: {profileId}}, dispatch, getState}) {
   let downloadedProfiles = getState().profiles.results
   if (!(downloadedProfiles && (profileId in downloadedProfiles))) {
     let result = await fetch(`/api/data/${encodeURIComponent(profileId)}`)

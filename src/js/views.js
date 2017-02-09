@@ -1,12 +1,13 @@
 'use strict'
 import {element} from './deku-seamless-immutable'
 import {Actions} from './actions'
-import {stripMessageBarriers} from './callgraph-helpers'
+import {stripMessageBarriers, selfGraph} from './callgraph-helpers'
 import _ from 'lodash'
 
-export function ViewProfile ({props: {profileId, data}}) {
-  if (data) return <ul><li><CallGraph callGraph={stripMessageBarriers(data)} totalTime={data.time} /></li></ul>
-  else return <h1>Loading...</h1>
+export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {
+  if (!data) return <h1>Loading...</h1>
+  else if (bottomUp) return <BottomUpCallGraph callGraph={selfGraph(stripMessageBarriers(data))} totalTime={data.time} />
+  else return <ul><CallGraph callGraph={stripMessageBarriers(data)} totalTime={data.time} /></ul>
 }
 
 export function ViewSearch ({props: {params}}) {
@@ -14,7 +15,7 @@ export function ViewSearch ({props: {params}}) {
 }
 
 export function CallGraph ({props: {callGraph, totalTime}, context: {expandedCallGraphNodes}, path, dispatch}) {
-  return <div>
+  return <li>
     <div
       onClick={() => dispatch(Actions.TOGGLE_CALL_GRAPH_NODE(path))}>
       <DataBar redSize={callGraph.time - callGraph.self_time} yellowSize={callGraph.self_time} totalSize={totalTime}>
@@ -44,20 +45,47 @@ export function CallGraph ({props: {callGraph, totalTime}, context: {expandedCal
         {
           callGraph.children
           ? <ul>
-            {callGraph.children.map(c => <li><CallGraph callGraph={c} totalTime={totalTime} /></li>)}
+            {callGraph.children.map(c => <CallGraph callGraph={c} totalTime={totalTime} />)}
           </ul>
           : null
         }
       </div>
       : null
     }
-  </div>
+  </li>
+}
+
+export function BottomUpCallGraph ({props: {callGraph, totalTime}}) {
+  return <ul>
+    {
+      callGraph.map(item =>
+        <BottomUpCallGraphItem item={item} totalTime={totalTime} />
+      )
+    }
+  </ul>
+}
+
+function BottomUpCallGraphItem ({props: {item: {instruction, self_time, callers}, totalTime}, context: {expandedCallGraphNodes}, path, dispatch}) {
+  return <li>
+    <div onClick={() => dispatch(Actions.TOGGLE_CALL_GRAPH_NODE(path))}>
+      <DataBar redSize={self_time} totalSize={totalTime}>
+        {instruction} ({self_time} seconds)
+      </DataBar>
+    </div>
+    {
+      (expandedCallGraphNodes[path] && callers)
+      ? <BottomUpCallGraph callGraph={callers} totalTime={totalTime} />
+      : null
+    }
+  </li>
 }
 
 export function DataBar ({props: {redSize, yellowSize, totalSize}, children}) {
   return <div style={'position: relative; width: 100%'}>
-    <span style={`position: absolute; top: 0px; left: 0px; z-index: 0; display: block; height: 100%; width: ${redSize / totalSize * 100}%; background-color: rgba(203, 75, 22, 0.4); text-align: right;`} />
-    <span style={`position: absolute; top: 0px; left: 0px; z-index: 0; display: block; height: 100%; width: ${yellowSize / totalSize * 100}%; background-color: rgba(203, 203, 22, 0.4); text-align: right;`} />
+    <div style={`position: absolute; top: 0px; left: 0px; z-index: 0; height: 100%; width: 100%;`}>
+      <div style={`height: 100%; width: ${redSize / totalSize * 100}%; background-color: rgba(203, 75, 22, 0.4); float: left;`} />
+      <div style={`height: 100%; width: ${yellowSize / totalSize * 100}%; background-color: rgba(203, 203, 22, 0.4); float: left;`} />
+    </div>
     {children}
   </div>
 }
