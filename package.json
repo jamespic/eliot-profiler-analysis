@@ -47,8 +47,9 @@
     "isomorphic-fetch": "^2.2.1",
     "lodash": "^4.17.4",
     "page": "^1.7.1",
+    "query-string": "^4.3.1",
     "redux": "^3.6.0",
-    "redux-actions": "^1.2.1",
+    "redux-easy-actions": "^0.4.0",
     "redux-effex": "^1.1.2",
     "redux-seamless-immutable": "^0.3.0",
     "seamless-immutable": "^7.0.1"
