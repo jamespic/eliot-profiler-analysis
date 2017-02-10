@@ -20,7 +20,7 @@ def app(db):
                     '/': join(dirname(__file__), 'static', 'index.html')
                 }
             ),
-            {'/static': ('eliot_profiler_analysis', 'static')}
+            {'/static': ('eliot_profiler_analysis', 'static/bundle')}
         ),
         {
             '/api': api(db)

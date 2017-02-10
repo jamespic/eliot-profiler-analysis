@@ -92,8 +92,7 @@ ENV/
 node_modules/
 
 # Webpack outputs
-/src/eliot_profiler_analysis/static/bundle.js
-/src/eliot_profiler_analysis/static/bundle.js.map
+/src/eliot_profiler_analysis/static/bundle/
 
 # Tern settings
 .tern-project

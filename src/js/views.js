@@ -2,7 +2,7 @@
 import {element} from './deku-seamless-immutable'
 import {Actions, Constants} from './actions'
 import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, selfGraph} from './callgraph-helpers'
-import _ from 'lodash'
+import {flow, toPairs, flatMap, filter} from 'lodash/fp'
 
 export function Router ({context: {lastNavigation, profiles}}) {
   switch (lastNavigation.type) {
@@ -59,16 +59,16 @@ export function CallGraph ({props: {callGraph, totalTime}, context: {expandedCal
     {
       expandedCallGraphNodes[path]
       ? <div>
-        <dl>
+        <dl class='dl-horizontal'>
           {
-            _.chain(callGraph)
-            .toPairs()
-            .filter(([k, v]) => (k !== 'children') && (k !== 'instruction'))
-            .flatMap(([k, v]) => [
-              <dt>{k}</dt>,
-              <dd>{(typeof v === 'object') ? JSON.stringify(v) : v}</dd>
-            ])
-            .value()
+            flow(
+              toPairs,
+              filter(([k, v]) => (k !== 'children') && (k !== 'instruction')),
+              flatMap(([k, v]) => [
+                <dt>{k}</dt>,
+                <dd>{(typeof v === 'object') ? JSON.stringify(v) : v}</dd>
+              ])
+            )(callGraph)
           }
         </dl>
         {
