@@ -32,11 +32,13 @@
 .call-graph-details {
   dl {
     @extend .row;
+    font-size: 80%;
     dt {
-      @extend .col-sm-2;
+      @extend .col-sm-1;
+      @extend .text-truncate;
     };
     dd {
-      @extend .col-sm-10;
+      @extend .col-sm-11;
       margin-bottom: 0;
     };
   };
@@ -49,4 +51,8 @@
     position: absolute;
     left: -1.5em;
   }
+}
+
+.instruction {
+  font-weight: 500;
 }

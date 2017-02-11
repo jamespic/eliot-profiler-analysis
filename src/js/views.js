@@ -101,12 +101,14 @@ export function Expandable ({children, props: {header}, context: {expandedCallGr
 
 export function CallGraph ({props: {callGraph, totalTime, expanded}}) {
   let header = <DataBar mainSize={callGraph.time - callGraph.self_time} extraSize={callGraph.self_time} totalSize={totalTime}>
-    {
-      callGraph.instruction ||
-      (callGraph.message || {}).action_type ||
-      (callGraph.source && `${callGraph.source} (Thread ${callGraph.thread}, Task ${callGraph.task_uuid})`) ||
-      ''
-    }
+    <span class='instruction'>
+      {
+        callGraph.instruction ||
+        (callGraph.message || {}).action_type ||
+        (callGraph.source && `${callGraph.source} (Thread ${callGraph.thread}, Task ${callGraph.task_uuid})`) ||
+        ''
+      }
+    </span>
   </DataBar>
   return <Expandable header={header}>
     <div class='call-graph-details'>
@@ -131,32 +133,32 @@ function humanize (seconds) {
 }
 
 export function CallGraphSummary ({props: {callGraph}}) {
-  return <dl>
-    <dt>Timings</dt>
-    <dd>{moment(callGraph.start_time).format('LTS l')} to {moment(callGraph.end_time).format('LTS l')}</dd>
-    <dt>Duration</dt>
-    <dd>
-      {humanize(callGraph.time)} ({humanize(callGraph.self_time)} self time)
-    </dd>
-    {
-      _.flatMap(callGraph, (v, k) => {
-        switch (k) {
-          case 'children':
-          case 'instruction':
-          case 'start_time':
-          case 'end_time':
-          case 'self_time':
-          case 'time':
-            return []
-          default:
-            return [
-              <dt>{k}</dt>,
-              <dd>{(typeof v === 'object') ? JSON.stringify(v) : v}</dd>
-            ]
-        }
-      })
+  let extraInfo = _.flatMap(callGraph, (v, k) => {
+    switch (k) {
+      case 'children':
+      case 'instruction':
+      case 'start_time':
+      case 'end_time':
+      case 'self_time':
+      case 'time':
+        return []
+      default:
+        return [
+          <dt>{k}</dt>,
+          <dd>{(typeof v === 'object') ? JSON.stringify(v) : v}</dd>
+        ]
     }
-  </dl>
+  })
+  return <div>
+    <small>
+      {
+        humanize(callGraph.time)} ({humanize(callGraph.self_time)
+      } self time) — {
+        moment(callGraph.start_time).format('LTS l')} - {moment(callGraph.end_time).format('LTS l')
+      }
+    </small>
+    {extraInfo.length > 0 ? <dl>{extraInfo}</dl> : null}
+  </div>
 }
 
 export function BottomUpCallGraph ({props: {callGraph, totalTime}}) {
@@ -165,7 +167,11 @@ export function BottomUpCallGraph ({props: {callGraph, totalTime}}) {
       callGraph.map(({instruction, self_time, callers}) =>
         <Expandable header={
           <DataBar mainSize={self_time} totalSize={totalTime}>
-            {instruction} ({self_time} seconds)
+            <span class='instruction'>
+              {instruction}
+            </span> <small>
+              {humanize(self_time)} self time
+            </small>
           </DataBar>
         }>
           <BottomUpCallGraph callGraph={callers} totalTime={totalTime} />
