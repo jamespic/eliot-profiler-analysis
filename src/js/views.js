@@ -1,13 +1,14 @@
 'use strict'
 import {element} from './deku-seamless-immutable'
 import {Actions, Constants} from './actions'
-import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, selfGraph} from './callgraph-helpers'
+import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, selfGraph, summariseCallGraph} from './callgraph-helpers'
 import {flow, toPairs, flatMap, filter} from 'lodash/fp'
+import _ from 'lodash'
 
 export function Router ({context: {lastNavigation, profiles}}) {
   switch (lastNavigation.type) {
     case Constants.NAVIGATE_SEARCH:
-      return <ViewSearch params={lastNavigation.payload}/>
+      return <ViewSearch params={lastNavigation.payload} profiles={profiles}/>
     case Constants.NAVIGATE_VIEW_PROFILE: {
       let {profileId, bottomUp, flatten} = lastNavigation.payload
       return <ViewProfile profileId={profileId} data={profiles.results[profileId]} bottomUp={bottomUp} flatten={flatten}/>
@@ -17,8 +18,32 @@ export function Router ({context: {lastNavigation, profiles}}) {
   }
 }
 
-export function ViewSearch ({props: {params}}) {
-  return <h1>Searching for {JSON.stringify(params)}</h1>
+export function ViewSearch ({props: {params, profiles}, dispatch}) {
+  if (_.isEqual(params, profiles.search)) {
+    return <div>
+      <table class='table'>
+        <thead>
+          <th>Event</th>
+          <th>Start Time</th>
+          <th>Duration</th>
+        </thead>
+        <tbody>
+          {
+            _.map(profiles.results, (callGraph, key) => <tr>
+              <td>
+                <a href={`/view/${encodeURIComponent(key)}`}>
+                  {summariseCallGraph(callGraph)}
+                </a>
+              </td>
+              <td>{callGraph.start_time}</td>
+              <td>{callGraph.time}</td>
+            </tr>)
+          }
+        </tbody>
+      </table>
+      <button onClick={() => dispatch(Actions.WANT_MORE())}>More</button>
+    </div>
+  } else return <h1>Searching...</h1>
 }
 
 export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {

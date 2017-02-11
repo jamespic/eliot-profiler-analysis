@@ -77,10 +77,29 @@ export const stripMessageBarriers = defaultMemoize(function stripMessageBarriers
 })
 
 export function flattenByLine (instruction) { return instruction }
+
 // FIXME: This will break for files with colons
 export function flattenByMethod (instruction) {
   return instruction.split(':').slice(0, 2).join(':')
 }
 export function flattenByFile (instruction) {
   return instruction.split(':')[0]
+}
+
+export function summariseCallGraph(callGraph) {
+  let actions = {}
+  let instructions = {}
+  function readNode(node) {
+    if (node.message && node.message.action_type) actions[node.message.action_type] = null
+    if (node.instruction) instructions[node.instruction] = null
+    if (node.children) node.children.forEach(readNode)
+  }
+  readNode(callGraph)
+  if (Object.keys(actions).length > 0) {
+    return `${callGraph.source}: ${Object.keys(actions).slice(0, 5).join(', ')}`
+  } else if (Object.keys(instructions).length > 0) {
+    return `${callGraph.source}: ${Object.keys(instructions).slice(0, 5).join(', ')}`
+  } else if (callGraph.task_uuid) {
+    return `${callGraph.source}: ${callGraph.task_uuid}`
+  }
 }

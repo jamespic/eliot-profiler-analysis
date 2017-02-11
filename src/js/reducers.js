@@ -29,6 +29,12 @@ export function profiles (state = Immutable({search: null, results: {}}), action
         results: _.fromPairs(results)
       })
     }
+    case Constants.GOT_MORE: {
+      let {payload: {params, results}} = action
+      if (_.isEqual(params, state.search)) {
+        return state.set('results', state.results.merge(_.fromPairs(results)))
+      } else return state
+    }
     default:
       return state
   }

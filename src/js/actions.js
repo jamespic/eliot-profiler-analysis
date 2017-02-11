@@ -2,20 +2,26 @@
 import Immutable from 'seamless-immutable'
 
 export const Actions = {
-  RECEIVE_SEARCH_RESULTS(params, results) {
+  RECEIVE_SEARCH_RESULTS (params, results) {
     return {params, results}
   },
-  RECEIVE_PROFILE_DATA(profileId, data) {
+  RECEIVE_PROFILE_DATA (profileId, data) {
     return {profileId, data}
   },
-  NAVIGATE_VIEW_PROFILE(profileId, bottomUp=false, flatten) {
+  NAVIGATE_VIEW_PROFILE (profileId, bottomUp = false, flatten) {
     return {profileId, bottomUp, flatten}
   },
-  NAVIGATE_SEARCH(params) {
+  NAVIGATE_SEARCH (params) {
     return params
   },
-  TOGGLE_CALL_GRAPH_NODE(path) {
+  TOGGLE_CALL_GRAPH_NODE (path) {
     return path
+  },
+  WANT_MORE () {
+    return null
+  },
+  GOT_MORE (params, results) {
+    return {params, results}
   }
 }
 
