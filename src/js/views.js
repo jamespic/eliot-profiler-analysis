@@ -3,6 +3,14 @@ import {element} from './deku-seamless-immutable'
 import {Actions, Constants} from './actions'
 import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, selfGraph, summariseCallGraph} from './callgraph-helpers'
 import _ from 'lodash'
+import humanizeDuration from 'humanize-duration'
+import moment from 'moment'
+
+export function Main ({children}) {
+  return <div class='container-fluid'>
+    {children}
+  </div>
+}
 
 export function Router ({context: {lastNavigation, profiles}}) {
   switch (lastNavigation.type) {
@@ -81,9 +89,8 @@ export function FontAwesome ({props: {icon, options}}) {
 export function Expandable ({children, props: {header}, context: {expandedCallGraphNodes}, path, dispatch}) {
   let expanded = expandedCallGraphNodes[path]
   return <div>
-    <div style='position: relative; margin-left: 2em'>
-      <span style='position: absolute; left: -1.5em'
-        onClick={() => dispatch(Actions.TOGGLE_CALL_GRAPH_NODE(path))}>
+    <div class='expandable'>
+      <span class='expander' onClick={() => dispatch(Actions.TOGGLE_CALL_GRAPH_NODE(path))}>
         <FontAwesome icon={expanded ? 'minus-square' : 'plus-square'} />
       </span>
       {header}
@@ -102,25 +109,54 @@ export function CallGraph ({props: {callGraph, totalTime, expanded}}) {
     }
   </DataBar>
   return <Expandable header={header}>
-    <div>
-      <dl class='row'>
-        {
-          _.flatMap(callGraph, (v, k) =>
-            (k === 'children' || k === 'instruction') ? []
-            : [
-              <dt class='col-sm-2'>{k}</dt>,
-              <dd class='col-sm-10' style='margin-bottom: 0'>
-                {(typeof v === 'object') ? JSON.stringify(v) : v}
-              </dd>
-            ]
-          )
-        }
-      </dl>
+    <div class='call-graph-details'>
+      <CallGraphSummary callGraph={callGraph} />
       {
         _.map(callGraph.children, c => <CallGraph callGraph={c} totalTime={totalTime} />)
       }
     </div>
   </Expandable>
+}
+
+function humanize (seconds) {
+  return humanizeDuration(
+    seconds * 1000,
+    {
+      largest: 2,
+      round: true,
+      units: ['y', 'mo', 'd', 'h', 'm', 's', 'ms'],
+      language: (typeof window !== 'undefined') ? window.navigator.language.split('-')[0] : 'en'
+    }
+  )
+}
+
+export function CallGraphSummary ({props: {callGraph}}) {
+  return <dl>
+    <dt>Timings</dt>
+    <dd>{moment(callGraph.start_time).format('LTS l')} to {moment(callGraph.end_time).format('LTS l')}</dd>
+    <dt>Duration</dt>
+    <dd>
+      {humanize(callGraph.time)} ({humanize(callGraph.self_time)} self time)
+    </dd>
+    {
+      _.flatMap(callGraph, (v, k) => {
+        switch (k) {
+          case 'children':
+          case 'instruction':
+          case 'start_time':
+          case 'end_time':
+          case 'self_time':
+          case 'time':
+            return []
+          default:
+            return [
+              <dt>{k}</dt>,
+              <dd>{(typeof v === 'object') ? JSON.stringify(v) : v}</dd>
+            ]
+        }
+      })
+    }
+  </dl>
 }
 
 export function BottomUpCallGraph ({props: {callGraph, totalTime}}) {
@@ -140,10 +176,10 @@ export function BottomUpCallGraph ({props: {callGraph, totalTime}}) {
 }
 
 export function DataBar ({props: {mainSize, extraSize, totalSize}, children}) {
-  return <div style={'position: relative; width: 100%'}>
-    <div style={`position: absolute; top: 0px; left: 0px; z-index: -1; height: 100%; width: 100%;`}>
-      <div style={`height: 100%; width: ${mainSize / totalSize * 100}%; background-color: #ffd6ce; float: left;`} />
-      <div style={`height: 100%; width: ${extraSize / totalSize * 100}%; background-color: #ceeaff; float: left;`} />
+  return <div class='data-bar-outer'>
+    <div class='data-bar-inner'>
+      <div style={`width: ${mainSize / totalSize * 100}%;`} class='data-bar-main' />
+      <div style={`width: ${extraSize / totalSize * 100}%;`} class='data-bar-extra' />
     </div>
     {children}
   </div>

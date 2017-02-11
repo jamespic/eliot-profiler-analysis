@@ -1,0 +1,52 @@
+@import "~bootstrap/scss/bootstrap";
+
+.data-bar-outer {
+  position: relative;
+  width: 100%;
+};
+
+.data-bar-inner {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: -1;
+  height: 100%;
+  width: 100%;
+};
+
+.data-bar-data {
+  height: 100%;
+  float: left;
+};
+
+.data-bar-main {
+  @extend .data-bar-data;
+  background-color: #ffd6ce;
+};
+
+.data-bar-extra {
+  @extend .data-bar-data;
+  background-color: #ceeaff;
+};
+
+.call-graph-details {
+  dl {
+    @extend .row;
+    dt {
+      @extend .col-sm-2;
+    };
+    dd {
+      @extend .col-sm-10;
+      margin-bottom: 0;
+    };
+  };
+};
+
+.expandable {
+  position: relative;
+  margin-left: 2em;
+  .expander {
+    position: absolute;
+    left: -1.5em;
+  }
+}
