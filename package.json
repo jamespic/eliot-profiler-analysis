@@ -52,6 +52,7 @@
     "babel-polyfill": "^6.22.0",
     "bootstrap": "^4.0.0-alpha.6",
     "deku": "^2.0.0-rc16",
+    "font-awesome": "^4.7.0",
     "isomorphic-fetch": "^2.2.1",
     "lodash": "^4.17.4",
     "page": "^1.7.1",

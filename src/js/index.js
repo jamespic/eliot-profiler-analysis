@@ -11,6 +11,7 @@ import * as reducers from './reducers'
 import {Router} from './views'
 import Effects from './effects'
 import 'bootstrap/scss/bootstrap.scss'
+import 'font-awesome/scss/font-awesome.scss'
 
 const composeEnhancers = ((typeof window !== 'undefined') && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) || compose
 
