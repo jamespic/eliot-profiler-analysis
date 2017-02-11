@@ -10,7 +10,7 @@ import {Actions} from './actions'
 import * as reducers from './reducers'
 import {Router} from './views'
 import Effects from './effects'
-import 'bootstrap/less/bootstrap.less'
+import 'bootstrap/scss/bootstrap.scss'
 
 const composeEnhancers = ((typeof window !== 'undefined') && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) || compose
 

@@ -12,11 +12,11 @@ module.exports = {
     rules: [
       {test: /\.(js|jsx)$/, use: 'babel-loader'},
       {
-        test: /\.(less)$/,
+        test: /\.(s[ac]ss)$/,
         use: ExtractTextPlugin.extract({
           use: [
             { loader: 'css-loader', options: { importLoaders: 1, sourceMap: true } },
-            { loader: 'less-loader', options: { sourceMap: true } }
+            { loader: 'sass-loader', options: { sourceMap: true } }
           ],
           fallback: 'style-loader'}
         )

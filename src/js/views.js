@@ -84,16 +84,18 @@ export function CallGraph ({props: {callGraph, totalTime}, context: {expandedCal
     {
       expandedCallGraphNodes[path]
       ? <div>
-        <dl class='dl-horizontal'>
+        <dl class='row'>
           {
-            flow(
-              toPairs,
-              filter(([k, v]) => (k !== 'children') && (k !== 'instruction')),
-              flatMap(([k, v]) => [
-                <dt>{k}</dt>,
-                <dd>{(typeof v === 'object') ? JSON.stringify(v) : v}</dd>
-              ])
-            )(callGraph)
+            _.flatMap(callGraph, (v, k) => {
+              if (k === 'children' || k === 'instruction') {
+                return []
+              } else{
+                return [
+                  <dt class='col-sm-2'>{k}</dt>,
+                  <dd class='col-sm-10'>{(typeof v === 'object') ? JSON.stringify(v) : v}</dd>
+                ]
+              }
+            })
           }
         </dl>
         {
