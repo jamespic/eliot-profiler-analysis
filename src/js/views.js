@@ -76,32 +76,36 @@ export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {
     default:
       // pass
   }
-  return <div>
-    <nav class='nav nav-pills flex-column flex-sm-row py-2'>
-      <DropDown title={bottomUp ? 'Bottom Up' : 'Top Down'}>
-        <a class={`dropdown-item ${bottomUp ? '' : 'active'}`}
-          href={changedOptionUrl('bottomUp', false)}>Top Down</a>
-        <a class={`dropdown-item ${bottomUp ? 'active' : ''}`}
-          href={changedOptionUrl('bottomUp', true)}>Bottom Up</a>
-      </DropDown>
-      <DropDown title='Filter'>
-        <a class={`dropdown-item ${flatten === 'none' ? 'active' : ''}`}
-          href={changedOptionUrl('flatten', 'none')}>No Filter</a>
-        <a class={`dropdown-item ${flatten === 'strip_messages' ? 'active' : ''}`}
-          href={changedOptionUrl('flatten', 'strip_messages')}>Hide Messages</a>
-        <a class={`dropdown-item ${flatten === 'line' ? 'active' : ''}`}
-          href={changedOptionUrl('flatten', 'line')}>Collapse Recursive Lines</a>
-        <a class={`dropdown-item ${flatten === 'method' ? 'active' : ''}`}
-          href={changedOptionUrl('flatten', 'method')}>Collapse Recursive Methods</a>
-        <a class={`dropdown-item ${flatten === 'file' ? 'active' : ''}`}
-          href={changedOptionUrl('flatten', 'file')}>Collapse Recursive Files</a>
-      </DropDown>
-    </nav>
-    {
-      bottomUp
-      ? <BottomUpCallGraph key='bottomUpGraph' callGraph={selfGraph(data)} totalTime={data.time} />
-      : <CallGraph key='topDownGraph' callGraph={data} totalTime={data.time} />
-    }
+  return <div class='card'>
+    <div class='card-header'>
+      <nav class='nav nav-pills flex-column flex-sm-row'>
+        <DropDown title={bottomUp ? 'Bottom Up' : 'Top Down'}>
+          <a class={`dropdown-item ${bottomUp ? '' : 'active'}`}
+            href={changedOptionUrl('bottomUp', false)}>Top Down</a>
+          <a class={`dropdown-item ${bottomUp ? 'active' : ''}`}
+            href={changedOptionUrl('bottomUp', true)}>Bottom Up</a>
+        </DropDown>
+        <DropDown title='Filter'>
+          <a class={`dropdown-item ${flatten === 'none' ? 'active' : ''}`}
+            href={changedOptionUrl('flatten', 'none')}>No Filter</a>
+          <a class={`dropdown-item ${flatten === 'strip_messages' ? 'active' : ''}`}
+            href={changedOptionUrl('flatten', 'strip_messages')}>Hide Messages</a>
+          <a class={`dropdown-item ${flatten === 'line' ? 'active' : ''}`}
+            href={changedOptionUrl('flatten', 'line')}>Collapse Recursive Lines</a>
+          <a class={`dropdown-item ${flatten === 'method' ? 'active' : ''}`}
+            href={changedOptionUrl('flatten', 'method')}>Collapse Recursive Methods</a>
+          <a class={`dropdown-item ${flatten === 'file' ? 'active' : ''}`}
+            href={changedOptionUrl('flatten', 'file')}>Collapse Recursive Files</a>
+        </DropDown>
+      </nav>
+    </div>
+    <div class='card-block'>
+      {
+        bottomUp
+        ? <BottomUpCallGraph key='bottomUpGraph' callGraph={selfGraph(data)} totalTime={data.time} />
+        : <CallGraph key='topDownGraph' callGraph={data} totalTime={data.time} />
+      }
+    </div>
   </div>
 }
 
@@ -217,7 +221,9 @@ export function DataBar ({props: {mainSize, extraSize, totalSize}, children}) {
       <div style={`width: ${mainSize / totalSize * 100}%;`} class='data-bar-main' />
       <div style={`width: ${extraSize / totalSize * 100}%;`} class='data-bar-extra' />
     </div>
-    {children}
+    <div class='data-bar-content'>
+      {children}
+    </div>
   </div>
 }
 

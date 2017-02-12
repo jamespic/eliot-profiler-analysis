@@ -9,7 +9,6 @@
   position: absolute;
   top: 0px;
   left: 0px;
-  z-index: -1;
   height: 100%;
   width: 100%;
 };
@@ -17,6 +16,11 @@
 .data-bar-data {
   height: 100%;
   float: left;
+};
+
+.data-bar-content {
+  position: relative;
+  z-index: 1;
 };
 
 .data-bar-main {
