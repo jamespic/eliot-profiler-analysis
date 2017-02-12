@@ -15,10 +15,10 @@ export function Main ({children}) {
 export function Router ({context: {lastNavigation, profiles}}) {
   switch (lastNavigation.type) {
     case Constants.NAVIGATE_SEARCH:
-      return <ViewSearch params={lastNavigation.payload} profiles={profiles}/>
+      return <ViewSearch params={lastNavigation.payload} profiles={profiles} />
     case Constants.NAVIGATE_VIEW_PROFILE: {
       let {profileId, bottomUp, flatten} = lastNavigation.payload
-      return <ViewProfile profileId={profileId} data={profiles.results[profileId]} bottomUp={bottomUp} flatten={flatten}/>
+      return <ViewProfile profileId={profileId} data={profiles.results[profileId]} bottomUp={bottomUp} flatten={flatten} />
     }
     default:
       return <h1>Loading...</h1>
@@ -54,6 +54,11 @@ export function ViewSearch ({props: {params, profiles}, dispatch}) {
 }
 
 export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {
+  function changedOptionUrl (option, value) {
+    let newBottomUp = (option === 'bottomUp') ? value : bottomUp
+    let newFlatten = (option === 'flatten') ? value : flatten
+    return `/view/${encodeURIComponent(profileId)}?bottomUp=${newBottomUp}&flatten=${newFlatten}`
+  }
   if (!data) return <h1>Loading...</h1>
   switch (flatten) {
     case 'strip_messages':
@@ -71,8 +76,33 @@ export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {
     default:
       // pass
   }
-  if (bottomUp) return <BottomUpCallGraph key='bottomUpGraph' callGraph={selfGraph(data)} totalTime={data.time} />
-  else return <CallGraph key='topDownGraph' callGraph={data} totalTime={data.time} />
+  return <div>
+    <nav class='nav nav-pills flex-column flex-sm-row py-2'>
+      <DropDown title={bottomUp ? 'Bottom Up' : 'Top Down'}>
+        <a class={`dropdown-item ${bottomUp ? '' : 'active'}`}
+          href={changedOptionUrl('bottomUp', false)}>Top Down</a>
+        <a class={`dropdown-item ${bottomUp ? 'active' : ''}`}
+          href={changedOptionUrl('bottomUp', true)}>Bottom Up</a>
+      </DropDown>
+      <DropDown title='Filter'>
+        <a class={`dropdown-item ${flatten === 'none' ? 'active' : ''}`}
+          href={changedOptionUrl('flatten', 'none')}>No Filter</a>
+        <a class={`dropdown-item ${flatten === 'strip_messages' ? 'active' : ''}`}
+          href={changedOptionUrl('flatten', 'strip_messages')}>Hide Messages</a>
+        <a class={`dropdown-item ${flatten === 'line' ? 'active' : ''}`}
+          href={changedOptionUrl('flatten', 'line')}>Collapse Recursive Lines</a>
+        <a class={`dropdown-item ${flatten === 'method' ? 'active' : ''}`}
+          href={changedOptionUrl('flatten', 'method')}>Collapse Recursive Methods</a>
+        <a class={`dropdown-item ${flatten === 'file' ? 'active' : ''}`}
+          href={changedOptionUrl('flatten', 'file')}>Collapse Recursive Files</a>
+      </DropDown>
+    </nav>
+    {
+      bottomUp
+      ? <BottomUpCallGraph key='bottomUpGraph' callGraph={selfGraph(data)} totalTime={data.time} />
+      : <CallGraph key='topDownGraph' callGraph={data} totalTime={data.time} />
+    }
+  </div>
 }
 
 export function FontAwesome ({props: {icon, options}}) {
@@ -189,4 +219,25 @@ export function DataBar ({props: {mainSize, extraSize, totalSize}, children}) {
     </div>
     {children}
   </div>
+}
+
+export function DropDown ({children, path, dispatch, props: {title}, context: {expandedDropDown}}) {
+  let expanded = path === expandedDropDown
+  return <li id={path} class={`nav-item dropdown ${expanded ? 'show' : ''}`}>
+    <a class='nav-link dropdown-toggle'
+      id={`dropdown-button.${path}`}
+      data-toggle='dropdown'
+      role='button'
+      aria-haspopup='true'
+      aria-expanded={String(expanded)}
+      onClick={e => {
+        dispatch(Actions.SET_VISIBLE_DROPDOWN(expanded ? null : path))
+        e.preventDefault()
+      }}>
+      {title}
+    </a>
+    <div class='dropdown-menu'>
+      {children}
+    </div>
+  </li>
 }

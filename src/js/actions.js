@@ -17,6 +17,9 @@ export const Actions = {
   TOGGLE_CALL_GRAPH_NODE (path) {
     return path
   },
+  SET_VISIBLE_DROPDOWN (path = null) {
+    return path
+  },
   WANT_MORE () {
     return null
   },
@@ -29,7 +32,7 @@ export const Constants = {}
 
 for (let action in Actions) {
   let currentAction = Actions[action]
-  Actions[action] = function() {
+  Actions[action] = function () {
     return Immutable({type: action, payload: currentAction.apply(this, arguments)})
   }
   Constants[action] = action

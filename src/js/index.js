@@ -25,16 +25,14 @@ const render = createApp(document.getElementById('main'), store.dispatch)
 
 store.subscribe(() => render(<Main><Router /></Main>, store.getState()))
 
-page('/view/:profileId', (context, next) => {
+page('/view/:profileId', (context) => {
   let qs = parse(context.querystring)
-  let flatten = qs.flatten
-  let bottomUp = Boolean(qs.bottomUp)
+  let flatten = qs.flatten || 'none'
+  let bottomUp = qs.bottomUp === 'true'
   store.dispatch(Actions.NAVIGATE_VIEW_PROFILE(context.params.profileId, bottomUp, flatten))
-  next()
 })
-page('/search', (context, next) => {
+page('/search', (context) => {
   store.dispatch(Actions.NAVIGATE_SEARCH(parse(context.querystring)))
-  next()
 })
 page('/', '/search')
 page({decodeURLComponents: false})

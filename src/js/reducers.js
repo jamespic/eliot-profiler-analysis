@@ -51,3 +51,12 @@ export function expandedCallGraphNodes (state = Immutable({}), action) {
       return state
   }
 }
+
+export function expandedDropDown (state = null, action) {
+  switch (action.type) {
+    case Constants.SET_VISIBLE_DROPDOWN:
+      return action.payload
+    default:
+      return state
+  }
+}

@@ -38,8 +38,24 @@ export async function viewEffect ({action: {payload: {profileId}}, dispatch, get
   }
 }
 
+export async function dropDownEffect ({action: {payload: path}, dispatch, nextDispatchAsync}) {
+  if (path !== null) {
+    var dropDownElement = window.document.getElementById(`dropdown-button.${path}`)
+    function dropDownListener (e) {
+      if (!dropDownElement.contains(e.target)) {
+        dispatch(Actions.SET_VISIBLE_DROPDOWN(null))
+      }
+    }
+    window.document.addEventListener('click', dropDownListener)
+    await Promise.resolve() // Next tick - avoid re-seeing same message
+    await nextDispatchAsync(Constants.SET_VISIBLE_DROPDOWN)
+    window.document.removeEventListener('click', dropDownListener)
+  }
+}
+
 export default [
   {action: Constants.NAVIGATE_SEARCH, effect: searchEffect},
   {action: Constants.WANT_MORE, effect: searchMoreEffect},
-  {action: Constants.NAVIGATE_VIEW_PROFILE, effect: viewEffect}
+  {action: Constants.NAVIGATE_VIEW_PROFILE, effect: viewEffect},
+  {action: Constants.SET_VISIBLE_DROPDOWN, effect: dropDownEffect}
 ]
