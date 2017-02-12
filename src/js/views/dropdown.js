@@ -6,7 +6,6 @@ export default function DropDown ({children, path, dispatch, props: {title}, con
   return <li id={path} class={`nav-item dropdown ${expanded ? 'show' : ''}`}>
     <a class='nav-link dropdown-toggle'
       id={`dropdown-button.${path}`}
-      data-toggle='dropdown'
       role='button'
       aria-haspopup='true'
       aria-expanded={String(expanded)}

@@ -1,11 +1,12 @@
 'use strict'
 import {element} from './deku-seamless-immutable'
 import {Actions, Constants} from '../actions'
-import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, selfGraph, summariseCallGraph} from './callgraph-helpers'
+import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, selfGraph} from './callgraph-helpers'
 import _ from 'lodash'
 import CallGraph from './callgraph'
 import BottomUpCallGraph from './bottomup-callgraph'
 import DropDown from './dropdown'
+import Search from './search'
 
 export function Main () {
   return <div class='container-fluid'>
@@ -29,26 +30,7 @@ export function RoutedContent ({context: {lastNavigation, profiles}}) {
 export function ViewSearch ({props: {params, profiles}, dispatch}) {
   if (_.isEqual(params, profiles.search)) {
     return <div>
-      <table class='table'>
-        <thead>
-          <th>Event</th>
-          <th>Start Time</th>
-          <th>Duration</th>
-        </thead>
-        <tbody>
-          {
-            _.map(profiles.results, (callGraph, key) => <tr>
-              <td>
-                <a href={`/view/${encodeURIComponent(key)}`}>
-                  {summariseCallGraph(callGraph)}
-                </a>
-              </td>
-              <td>{callGraph.start_time}</td>
-              <td>{callGraph.time}</td>
-            </tr>)
-          }
-        </tbody>
-      </table>
+      <Search profiles={profiles} />
       <button onClick={() => dispatch(Actions.WANT_MORE())}>More</button>
     </div>
   } else return <h1>Searching...</h1>

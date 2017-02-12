@@ -3,6 +3,7 @@
 .data-bar-outer {
   position: relative;
   width: 100%;
+  margin-bottom: 0.25rem;
 };
 
 .data-bar-inner {
@@ -25,12 +26,26 @@
 
 .data-bar-main {
   @extend .data-bar-data;
-  background-color: #ffd6ce;
+  // background-color: #ffd6ce;
+  background: repeating-linear-gradient(
+    45deg,
+    #ffded6,
+    #ffded6 8px,
+    #fceae5 8px,
+    #fceae5 16px
+  );
 };
 
 .data-bar-extra {
   @extend .data-bar-data;
-  background-color: #ceeaff;
+  // background-color: #ceeaff;
+  background: repeating-linear-gradient(
+    -45deg,
+    #d6f9ff,
+    #d6f9ff 10px,
+    #e5fbff 10px,
+    #e5fbff 20px
+  );
 };
 
 .call-graph-details {
