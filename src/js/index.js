@@ -23,7 +23,7 @@ const store = createStore(
 
 const render = createApp(document.getElementById('main'), store.dispatch)
 
-store.subscribe(() => render(<Main><Router /></Main>, store.getState()))
+store.subscribe(() => render(<Main />, store.getState()))
 
 page('/view/:profileId', (context) => {
   let qs = parse(context.querystring)
@@ -37,4 +37,4 @@ page('/search', (context) => {
 page('/', '/search')
 page({decodeURLComponents: false})
 
-moment.lang(window.navigator.language)
+moment.locale(window.navigator.language)
