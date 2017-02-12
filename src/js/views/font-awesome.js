@@ -1,12 +1,7 @@
 import {element} from './deku-seamless-immutable'
 
-export default function FontAwesome ({props: {icon, options}}) {
+export default function FontAwesome ({props: {icon, opts = [], ...options}}) {
   let clazz = `fa fa-${icon} `
-  switch (typeof options) {
-    case 'string':
-      options = options.split(' ')
-    case 'object': // eslint-disable-line
-      clazz += options.map(o => 'fa-' + o).join(' ')
-  }
+  clazz += Object.keys(options).concat(opts).map(o => 'fa-' + o).join(' ')
   return <i class={clazz} />
 }

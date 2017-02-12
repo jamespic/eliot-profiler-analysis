@@ -8,11 +8,20 @@ export const Actions = {
   RECEIVE_PROFILE_DATA (profileId, data) {
     return {profileId, data}
   },
+  RECEIVE_ATTRIB_LIST (attribList) {
+    return attribList
+  },
+  RECEIVE_ATTRIB_VALUES (attrib, values) {
+    return {attrib, values}
+  },
   NAVIGATE_VIEW_PROFILE (profileId, bottomUp = false, flatten) {
     return {profileId, bottomUp, flatten}
   },
   NAVIGATE_SEARCH (params) {
     return params
+  },
+  CHANGE_SEARCH_OPTIONS (options) {
+    return options
   },
   TOGGLE_CALL_GRAPH_NODE (path) {
     return path

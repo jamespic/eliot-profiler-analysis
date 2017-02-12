@@ -96,10 +96,10 @@ export function summariseCallGraph(callGraph) {
   }
   readNode(callGraph)
   if (Object.keys(actions).length > 0) {
-    return `${callGraph.source}: ${Object.keys(actions).slice(0, 5).join(', ')}`
+    return Object.keys(actions).slice(0, 5).join(', ')
   } else if (Object.keys(instructions).length > 0) {
-    return `${callGraph.source}: ${Object.keys(instructions).slice(0, 5).join(', ')}`
+    return Object.keys(instructions).slice(0, 5).join(', ')
   } else if (callGraph.task_uuid) {
-    return `${callGraph.source}: ${callGraph.task_uuid}`
+    return String(callGraph.task_uuid)
   }
 }

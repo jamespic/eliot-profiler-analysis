@@ -52,10 +52,39 @@ export function expandedCallGraphNodes (state = Immutable({}), action) {
   }
 }
 
+export function searchOptions (state = Immutable({}), action) {
+  switch (action.type){
+    case Constants.NAVIGATE_SEARCH:
+      return action.payload
+    case Constants.CHANGE_SEARCH_OPTIONS:
+      return action.payload
+    default:
+      return state
+  }
+}
+
 export function expandedDropDown (state = null, action) {
   switch (action.type) {
     case Constants.SET_VISIBLE_DROPDOWN:
       return action.payload
+    default:
+      return state
+  }
+}
+
+export function attribs (state = Immutable({}), action) {
+  switch (action.type) {
+    case Constants.RECEIVE_ATTRIB_LIST:
+      return Immutable(
+        _.fromPairs(
+          action.payload.map(x => [x, []])
+        )
+      )
+    case Constants.RECEIVE_ATTRIB_VALUES: {
+      let {attrib, values} = action.payload
+      if (values.length > 0) return state.set(attrib, values)
+      else return state
+    }
     default:
       return state
   }

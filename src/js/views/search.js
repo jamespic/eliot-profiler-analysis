@@ -6,6 +6,7 @@ import _ from 'lodash'
 export default function Search ({props: {profiles}}) {
   return <table class='table'>
     <thead>
+      <th>Source</th>
       <th>Event</th>
       <th>Start Time</th>
       <th>Duration</th>
@@ -13,6 +14,7 @@ export default function Search ({props: {profiles}}) {
     <tbody>
       {
         _.map(profiles.results, (callGraph, key) => <tr>
+          <td>{callGraph.source}</td>
           <td>
             <a href={`/view/${encodeURIComponent(key)}`}>
               {summariseCallGraph(callGraph)}

@@ -1,12 +1,15 @@
 'use strict'
 import {element} from './deku-seamless-immutable'
 import {Actions, Constants} from '../actions'
-import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, selfGraph} from './callgraph-helpers'
-import _ from 'lodash'
 import CallGraph from './callgraph'
 import BottomUpCallGraph from './bottomup-callgraph'
 import DropDown from './dropdown'
 import Search from './search'
+import Throbber from './throbber'
+import FontAwesome from './font-awesome'
+import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, selfGraph} from './callgraph-helpers'
+import _ from 'lodash'
+import {stringify} from 'query-string'
 
 export function Main () {
   return <div class='container-fluid'>
@@ -23,26 +26,104 @@ export function RoutedContent ({context: {lastNavigation, profiles}}) {
       return <ViewProfile profileId={profileId} data={profiles.results[profileId]} bottomUp={bottomUp} flatten={flatten} />
     }
     default:
-      return <h1>Loading...</h1>
+      return <Throbber />
   }
 }
 
 export function ViewSearch ({props: {params, profiles}, dispatch}) {
-  if (_.isEqual(params, profiles.search)) {
-    return <div>
-      <Search profiles={profiles} />
-      <button onClick={() => dispatch(Actions.WANT_MORE())}>More</button>
+  return <div class='row'>
+    <div class='col-md-4 col-lg-3'>
+      <div class='card'>
+        <h3 class='card-header'>Search</h3>
+        <div class='card-block'>
+          <SearchOptions params={params} />
+        </div>
+      </div>
     </div>
-  } else return <h1>Searching...</h1>
+    <div class='col-md-8 col-lg-9'>
+      <div class='card'>
+        <h3 class='card-header'>Results</h3>
+        {
+          _.isEqual(params, profiles.search)
+          ? <div>
+            <Search profiles={profiles} />
+            <div class='card-block'>
+              <button class='btn btn-primary btn-lg btn-block'
+                onClick={() => dispatch(Actions.WANT_MORE())}>
+                More
+              </button>
+            </div>
+          </div>
+          : <Throbber />
+        }
+      </div>
+    </div>
+  </div>
+}
+
+export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
+  const changeSearchOptions = (option) => (event) => {
+    dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.set(option, event.target.value)))
+  }
+  const addSearchOption = (event) => {
+    dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.set('', '')))
+  }
+  const renameSearchOption = (oldName) => (event) => {
+    dispatch(Actions.CHANGE_SEARCH_OPTIONS(
+      searchOptions.without(oldName).set(event.target.value, '')
+    ))
+  }
+  const removeSearchOption = (option) => (event) => {
+    dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.without(option)))
+  }
+  return <form>
+    <div class='form-group'>
+      <label for='_order'>Order</label>
+      <select class='form-control' id='_order' onChange={changeSearchOptions('_order')}>
+        <option value='newest' selected={searchOptions._order === 'newest'}>Newest First</option>
+        <option value='oldest' selected={searchOptions._order === 'oldest'}>Oldest First</option>
+      </select>
+    </div>
+    {
+      _.map(searchOptions, (v, k) => {
+        if (k.startsWith('_')) return null
+        else {
+          return <div class='form-group'>
+            <div class='input-group'>
+              <select class='form-control' onChange={renameSearchOption(k, v)}>
+                {_.map(attribs, (_, attrib) =>
+                  <option value={attrib} selected={attrib === k}>{attrib}</option>
+                )}
+              </select>
+              <select class='form-control' onChange={changeSearchOptions(k)}>
+                <option value='' />
+                {_.map(attribs[k] || [], value =>
+                  <option value={value} selected={value === v}>{value}</option>
+                )}
+              </select>
+              <span class='input-group-btn'>
+                <button class='btn btn-danger' type='button' onClick={removeSearchOption(k)}>
+                  <FontAwesome icon='close' />
+                </button>
+              </span>
+            </div>
+          </div>
+        }
+      })
+    }
+    <div class='form-group'>
+      <button class='btn btn-success' onClick={addSearchOption}>
+        Add Term <FontAwesome icon='plus' />
+      </button>
+      <a class='btn btn-primary float-right' href={`/search?${stringify(searchOptions)}`}>
+        Search <FontAwesome icon='search' />
+      </a>
+    </div>
+  </form>
 }
 
 export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {
-  function changedOptionUrl (option, value) {
-    let newBottomUp = (option === 'bottomUp') ? value : bottomUp
-    let newFlatten = (option === 'flatten') ? value : flatten
-    return `/view/${encodeURIComponent(profileId)}?bottomUp=${newBottomUp}&flatten=${newFlatten}`
-  }
-  if (!data) return <h1>Loading...</h1>
+  if (!data) return <Throbber />
   switch (flatten) {
     case 'strip_messages':
       data = stripMessageBarriers(data)
@@ -61,26 +142,7 @@ export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {
   }
   return <div class='card'>
     <div class='card-header'>
-      <nav class='nav nav-pills flex-column flex-sm-row'>
-        <DropDown title={bottomUp ? 'Bottom Up' : 'Top Down'}>
-          <a class={`dropdown-item ${bottomUp ? '' : 'active'}`}
-            href={changedOptionUrl('bottomUp', false)}>Top Down</a>
-          <a class={`dropdown-item ${bottomUp ? 'active' : ''}`}
-            href={changedOptionUrl('bottomUp', true)}>Bottom Up</a>
-        </DropDown>
-        <DropDown title='Filter'>
-          <a class={`dropdown-item ${flatten === 'none' ? 'active' : ''}`}
-            href={changedOptionUrl('flatten', 'none')}>No Filter</a>
-          <a class={`dropdown-item ${flatten === 'strip_messages' ? 'active' : ''}`}
-            href={changedOptionUrl('flatten', 'strip_messages')}>Hide Messages</a>
-          <a class={`dropdown-item ${flatten === 'line' ? 'active' : ''}`}
-            href={changedOptionUrl('flatten', 'line')}>Collapse Recursive Lines</a>
-          <a class={`dropdown-item ${flatten === 'method' ? 'active' : ''}`}
-            href={changedOptionUrl('flatten', 'method')}>Collapse Recursive Methods</a>
-          <a class={`dropdown-item ${flatten === 'file' ? 'active' : ''}`}
-            href={changedOptionUrl('flatten', 'file')}>Collapse Recursive Files</a>
-        </DropDown>
-      </nav>
+      <ViewProfileNav profileId={profileId} bottomUp={bottomUp} flatten={flatten} task_uuid={data.task_uuid}/>
     </div>
     <div class='card-block'>
       {
@@ -90,4 +152,37 @@ export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {
       }
     </div>
   </div>
+}
+
+function ViewProfileNav ({props: {profileId, bottomUp, flatten, task_uuid}}) {
+  function changedOptionUrl (option, value) {
+    let newBottomUp = (option === 'bottomUp') ? value : bottomUp
+    let newFlatten = (option === 'flatten') ? value : flatten
+    return `/view/${encodeURIComponent(profileId)}?bottomUp=${newBottomUp}&flatten=${newFlatten}`
+  }
+  return <nav class='nav nav-pills flex-column flex-sm-row'>
+    <div class='navbar-brand'>Profile</div>
+    <DropDown title={bottomUp ? 'Bottom Up' : 'Top Down'}>
+      <a class={`dropdown-item ${bottomUp ? '' : 'active'}`}
+        href={changedOptionUrl('bottomUp', false)}>Top Down</a>
+      <a class={`dropdown-item ${bottomUp ? 'active' : ''}`}
+        href={changedOptionUrl('bottomUp', true)}>Bottom Up</a>
+    </DropDown>
+    <DropDown title='Filter'>
+      <a class={`dropdown-item ${flatten === 'none' ? 'active' : ''}`}
+        href={changedOptionUrl('flatten', 'none')}>No Filter</a>
+      <a class={`dropdown-item ${flatten === 'strip_messages' ? 'active' : ''}`}
+        href={changedOptionUrl('flatten', 'strip_messages')}>Hide Messages</a>
+      <a class={`dropdown-item ${flatten === 'line' ? 'active' : ''}`}
+        href={changedOptionUrl('flatten', 'line')}>Collapse Recursive Lines</a>
+      <a class={`dropdown-item ${flatten === 'method' ? 'active' : ''}`}
+        href={changedOptionUrl('flatten', 'method')}>Collapse Recursive Methods</a>
+      <a class={`dropdown-item ${flatten === 'file' ? 'active' : ''}`}
+        href={changedOptionUrl('flatten', 'file')}>Collapse Recursive Files</a>
+    </DropDown>
+    <a href={`/search?task_uuid=${encodeURIComponent(task_uuid)}`}
+      class='nav-link ml-auto'>
+      View Related
+    </a>
+  </nav>
 }
