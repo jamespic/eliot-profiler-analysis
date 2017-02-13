@@ -96,7 +96,8 @@ export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
         type='datetime-local'
         id='_start_time'
         onChange={changeSearchOptions('_start_time')}
-        value={searchOptions._start_time} />
+        value={searchOptions._start_time}
+        step='1' />
     </div>
     <div class='form-group'>
       <label for='_end_time'>End Time</label>
@@ -104,7 +105,8 @@ export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
         type='datetime-local'
         id='_end_time'
         onChange={changeSearchOptions('_end_time')}
-        value={searchOptions._end_time} />
+        value={searchOptions._end_time}
+        step='1' />
     </div>
     {
       _.map(searchOptions, (v, k) => {

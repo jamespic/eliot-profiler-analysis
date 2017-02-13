@@ -55,7 +55,7 @@ export function expandedCallGraphNodes (state = Immutable({}), action) {
 
 function _formatDatetimeLocal (m) {
   m = moment(m)
-  if (m.isValid()) return m.format('YYYY-MM-DDTHH:mm')
+  if (m.isValid()) return m.format('YYYY-MM-DDTHH:mm:ss')
   else return ''
 }
 
