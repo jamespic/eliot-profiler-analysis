@@ -10,6 +10,7 @@ import FontAwesome from './font-awesome'
 import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, selfGraph} from './callgraph-helpers'
 import _ from 'lodash'
 import {stringify} from 'query-string'
+import moment from 'moment'
 
 export function Main () {
   return <div class='container-fluid'>
@@ -61,9 +62,21 @@ export function ViewSearch ({props: {params, profiles}, dispatch}) {
   </div>
 }
 
+function formatDatetimeLocal (m) {
+  if (!m) return ''
+  m = moment(m)
+  if (m.isValid()) return m.format('YYYY-MM-DDTHH:mm')
+  else return ''
+}
+
 export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
   const changeSearchOptions = (option) => (event) => {
     dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.set(option, event.target.value)))
+  }
+  const changeSearchDate = (option) => (event) => {
+    let value = moment(event.target.value)
+    let validatedValue = value.isValid() ? value.toISOString() : ''
+    dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.set(option, validatedValue)))
   }
   const addSearchOption = (event) => {
     dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.set('', '')))
@@ -83,6 +96,22 @@ export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
         <option value='newest' selected={searchOptions._order === 'newest'}>Newest First</option>
         <option value='oldest' selected={searchOptions._order === 'oldest'}>Oldest First</option>
       </select>
+    </div>
+    <div class='form-group'>
+      <label for='_start_time'>Start Time</label>
+      <input class='form-control'
+        type='datetime-local'
+        id='_start_time'
+        onChange={changeSearchDate('_start_time')}
+        value={formatDatetimeLocal(searchOptions._start_time)} />
+    </div>
+    <div class='form-group'>
+      <label for='_end_time'>End Time</label>
+      <input class='form-control'
+        type='datetime-local'
+        id='_end_time'
+        onChange={changeSearchDate('_end_time')}
+        value={formatDatetimeLocal(searchOptions._end_time)} />
     </div>
     {
       _.map(searchOptions, (v, k) => {
