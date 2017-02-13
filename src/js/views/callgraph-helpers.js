@@ -86,10 +86,10 @@ export function flattenByFile (instruction) {
   return instruction.split(':')[0]
 }
 
-export function summariseCallGraph(callGraph) {
+export function summariseCallGraph (callGraph) {
   let actions = {}
   let instructions = {}
-  function readNode(node) {
+  function readNode (node) {
     if (node.message && node.message.action_type) actions[node.message.action_type] = null
     if (node.instruction) instructions[node.instruction] = null
     if (node.children) node.children.forEach(readNode)
@@ -101,5 +101,5 @@ export function summariseCallGraph(callGraph) {
     return Object.keys(instructions).slice(0, 5).join(', ')
   } else if (callGraph.task_uuid) {
     return String(callGraph.task_uuid)
-  }
+  } else return ''
 }
