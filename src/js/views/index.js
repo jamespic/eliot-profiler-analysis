@@ -10,6 +10,7 @@ import FontAwesome from './font-awesome'
 import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, selfGraph} from './callgraph-helpers'
 import _ from 'lodash'
 import {stringify} from 'query-string'
+import moment from 'moment'
 
 export function Main () {
   return <div class='container-fluid'>
@@ -61,6 +62,8 @@ export function ViewSearch ({props: {params, profiles}, dispatch}) {
   </div>
 }
 
+
+
 export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
   const changeSearchOptions = (option) => (event) => {
     dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.set(option, event.target.value)))
@@ -76,6 +79,9 @@ export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
   const removeSearchOption = (option) => (event) => {
     dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.without(option)))
   }
+  let urlParams = searchOptions
+    .update('_start_time', x => x ? moment(x).toISOString() : '')
+    .update('_end_time', x => x ? moment(x).toISOString() : '')
   return <form>
     <div class='form-group'>
       <label for='_order'>Order</label>
@@ -83,6 +89,24 @@ export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
         <option value='newest' selected={searchOptions._order === 'newest'}>Newest First</option>
         <option value='oldest' selected={searchOptions._order === 'oldest'}>Oldest First</option>
       </select>
+    </div>
+    <div class='form-group'>
+      <label for='_start_time'>Start Time</label>
+      <input class='form-control'
+        type='datetime-local'
+        id='_start_time'
+        onChange={changeSearchOptions('_start_time')}
+        value={searchOptions._start_time}
+        step='1' />
+    </div>
+    <div class='form-group'>
+      <label for='_end_time'>End Time</label>
+      <input class='form-control'
+        type='datetime-local'
+        id='_end_time'
+        onChange={changeSearchOptions('_end_time')}
+        value={searchOptions._end_time}
+        step='1' />
     </div>
     {
       _.map(searchOptions, (v, k) => {
@@ -115,7 +139,7 @@ export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
       <button class='btn btn-success' onClick={addSearchOption}>
         Add Term <FontAwesome icon='plus' />
       </button>
-      <a class='btn btn-primary float-right' href={`/search?${stringify(searchOptions)}`}>
+      <a class='btn btn-primary float-right' href={`/search?${stringify(urlParams)}`}>
         Search <FontAwesome icon='search' />
       </a>
     </div>
