@@ -2,6 +2,7 @@
 import Immutable from 'seamless-immutable'
 import {Constants} from './actions'
 import _ from 'lodash'
+import moment from 'moment'
 
 export function lastNavigation (state = Immutable({}), action) {
   switch (action.type) {
@@ -52,10 +53,26 @@ export function expandedCallGraphNodes (state = Immutable({}), action) {
   }
 }
 
+function _formatDatetimeLocal (m) {
+  m = moment(m)
+  if (m.isValid()) return m.format('YYYY-MM-DDTHH:mm')
+  else return ''
+}
+
+
 export function searchOptions (state = Immutable({}), action) {
-  switch (action.type){
-    case Constants.NAVIGATE_SEARCH:
-      return action.payload
+  switch (action.type) {
+    case Constants.NAVIGATE_SEARCH: {
+      let options = action.payload
+      if (options._start_time) {
+        options = options.update('_start_time', _formatDatetimeLocal)
+      }
+      if (options._end_time) {
+        options = options.update('_end_time', _formatDatetimeLocal)
+      }
+      return options
+    }
+
     case Constants.CHANGE_SEARCH_OPTIONS:
       return action.payload
     default:

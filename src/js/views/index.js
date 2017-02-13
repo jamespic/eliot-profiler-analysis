@@ -62,21 +62,11 @@ export function ViewSearch ({props: {params, profiles}, dispatch}) {
   </div>
 }
 
-function formatDatetimeLocal (m) {
-  if (!m) return ''
-  m = moment(m)
-  if (m.isValid()) return m.format('YYYY-MM-DDTHH:mm')
-  else return ''
-}
+
 
 export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
   const changeSearchOptions = (option) => (event) => {
     dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.set(option, event.target.value)))
-  }
-  const changeSearchDate = (option) => (event) => {
-    let value = moment(event.target.value)
-    let validatedValue = value.isValid() ? value.toISOString() : ''
-    dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.set(option, validatedValue)))
   }
   const addSearchOption = (event) => {
     dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.set('', '')))
@@ -89,6 +79,9 @@ export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
   const removeSearchOption = (option) => (event) => {
     dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.without(option)))
   }
+  let urlParams = searchOptions
+    .update('_start_time', x => x ? moment(x).toISOString() : '')
+    .update('_end_time', x => x ? moment(x).toISOString() : '')
   return <form>
     <div class='form-group'>
       <label for='_order'>Order</label>
@@ -102,16 +95,16 @@ export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
       <input class='form-control'
         type='datetime-local'
         id='_start_time'
-        onChange={changeSearchDate('_start_time')}
-        value={formatDatetimeLocal(searchOptions._start_time)} />
+        onChange={changeSearchOptions('_start_time')}
+        value={searchOptions._start_time} />
     </div>
     <div class='form-group'>
       <label for='_end_time'>End Time</label>
       <input class='form-control'
         type='datetime-local'
         id='_end_time'
-        onChange={changeSearchDate('_end_time')}
-        value={formatDatetimeLocal(searchOptions._end_time)} />
+        onChange={changeSearchOptions('_end_time')}
+        value={searchOptions._end_time} />
     </div>
     {
       _.map(searchOptions, (v, k) => {
@@ -144,7 +137,7 @@ export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
       <button class='btn btn-success' onClick={addSearchOption}>
         Add Term <FontAwesome icon='plus' />
       </button>
-      <a class='btn btn-primary float-right' href={`/search?${stringify(searchOptions)}`}>
+      <a class='btn btn-primary float-right' href={`/search?${stringify(urlParams)}`}>
         Search <FontAwesome icon='search' />
       </a>
     </div>
