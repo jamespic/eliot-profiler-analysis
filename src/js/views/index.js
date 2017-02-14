@@ -62,8 +62,6 @@ export function ViewSearch ({props: {params, profiles}, dispatch}) {
   </div>
 }
 
-
-
 export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
   const changeSearchOptions = (option) => (event) => {
     dispatch(Actions.CHANGE_SEARCH_OPTIONS(searchOptions.set(option, event.target.value)))

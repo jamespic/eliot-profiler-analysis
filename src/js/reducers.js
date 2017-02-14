@@ -59,7 +59,6 @@ function _formatDatetimeLocal (m) {
   else return ''
 }
 
-
 export function searchOptions (state = Immutable({}), action) {
   switch (action.type) {
     case Constants.NAVIGATE_SEARCH: {

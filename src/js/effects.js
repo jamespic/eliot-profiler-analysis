@@ -4,7 +4,6 @@ import fetch from 'isomorphic-fetch'
 import {stringify} from 'query-string'
 import Immutable from 'seamless-immutable'
 import _ from 'lodash'
-import page from 'page'
 
 export async function searchEffect ({action: {payload: params}, dispatch, getState}) {
   let {profiles: {search}} = getState()
