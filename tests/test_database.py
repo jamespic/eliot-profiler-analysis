@@ -86,6 +86,29 @@ class DatabaseTest(unittest.TestCase):
         self.assertItemsEqual(['null'],
                               self.instance.attrib_values('further_field'))
 
+    def test_insert_empty_value(self):
+        data_item_1 = {
+            'task_uuid': '123',
+            'source': 'test_source',
+            'thread': 54321,
+            'start_time': '2010-01-01T09:00:00.000+00:00',
+            'message': {
+                'action_type': 'hello'
+            }
+        }
+        data_item_2 = {
+            'task_uuid': '123',
+            'source': 'test_source',
+            'thread': 54321,
+            'start_time': '2010-01-01T09:00:00.000+00:00',
+            'message': {
+                'action_type': ''
+            }
+        }
+        self.instance.insert([data_item_1, data_item_2])
+        self.assertEqual(['<empty>', 'hello'], self.instance.attrib_values('action_type'))
+
+
 class TestSearch(unittest.TestCase):
     def assertMessage(self, **kwargs):
         self.logs.assertMessage(**kwargs)

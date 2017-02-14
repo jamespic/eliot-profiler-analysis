@@ -37,7 +37,8 @@ def _inner_extract_attribs(item):
     elif isinstance(item, bool):
         yield [], (u'true' if item else u'false')
     else:
-        yield [], six.text_type(item)
+        yield [], six.text_type(item) or '<empty>'
+
 
 def extract_attribs(item):
     for key, value in _inner_extract_attribs(item):
@@ -101,10 +102,12 @@ class Database(object):
                         e(json.dumps(item)),
                         db=self._master_db)
                 for attrib_key, attrib_val in extract_attribs(item):
-                    txn.put(e(attrib_key), e(attrib_val), db=self._attr_value_db)
+                    txn.put(e(attrib_key), e(attrib_val),
+                            db=self._attr_value_db, dupdata=True)
 
                     attrib_full = attrib_index_key(attrib_key, attrib_val)
-                    txn.put(e(attrib_full), e(item_key), db=self._attr_index_db)
+                    txn.put(e(attrib_full), e(item_key),
+                            db=self._attr_index_db, dupdata=True)
                 yield item_key
 
     def get(self, key):

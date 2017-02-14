@@ -27,6 +27,18 @@ def app(db):
         }
     )
 
+
+def debug_wrapper(app):
+    def handler(environ, start_response):
+        try:
+            return app(environ, start_response)
+        except:
+            import pudb
+            pudb.post_mortem()
+            raise
+    return handler
+
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
@@ -35,6 +47,10 @@ if __name__ == '__main__':
         help='The directory in which to create or open the database. If not'
         ' supplied, a temporary database will be used'
     )
+    parser.add_argument(
+        '--debug', action='store_true',
+        help='Enable pudb post mortem debugging'
+    )
     args = parser.parse_args()
 
     eliot.add_destination(eliot.FileDestination(sys.stderr))
@@ -42,7 +58,10 @@ if __name__ == '__main__':
     port = 8034
     try:
         with Database(dbdir) as db:
-            httpd = Server(('0.0.0.0', port), app(db))
+            the_app = app(db)
+            if args.debug:
+                the_app = debug_wrapper(the_app)
+            httpd = Server(('0.0.0.0', port), the_app)
             print('Serving "{dbdir}" on {port}'.format(dbdir=dbdir, port=port))
             httpd.safe_start()
     finally:
