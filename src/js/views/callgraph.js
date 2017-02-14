@@ -1,10 +1,11 @@
+'use strict'
 import {element} from './deku-seamless-immutable'
 import {humanizeSeconds, humanizeMoment} from './utils'
 import DataBar from './databar'
 import Expandable from './expandable'
 import _ from 'lodash'
 
-export default function CallGraph ({props: {callGraph, totalTime, expanded}}) {
+export default function CallGraph ({props: {callGraph, totalTime}}) {
   let header = <DataBar mainSize={callGraph.time - callGraph.self_time} extraSize={callGraph.self_time} totalSize={totalTime}>
     <span class='instruction'>
       {
