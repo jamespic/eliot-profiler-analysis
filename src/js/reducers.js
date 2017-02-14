@@ -14,15 +14,17 @@ export function lastNavigation (state = Immutable({}), action) {
   }
 }
 
-export function profiles (state = Immutable({search: null, results: {}}), action) {
+export function profileData (state = Immutable({}), action) {
   switch (action.type) {
-    case Constants.RECEIVE_PROFILE_DATA:{
-      let {payload: {profileId, data}} = action
-      return Immutable({
-        search: null,
-        results: {[profileId]: data}
-      })
-    }
+    case Constants.RECEIVE_PROFILE_DATA:
+      return action.payload
+    default:
+      return state
+  }
+}
+
+export function searchResults (state = Immutable({search: null, results: {}}), action) {
+  switch (action.type) {
     case Constants.RECEIVE_SEARCH_RESULTS: {
       let {payload: {params, results}} = action
       return Immutable({

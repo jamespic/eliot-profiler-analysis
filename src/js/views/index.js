@@ -18,20 +18,20 @@ export function Main () {
   </div>
 }
 
-export function RoutedContent ({context: {lastNavigation, profiles}}) {
+export function RoutedContent ({context: {lastNavigation}}) {
   switch (lastNavigation.type) {
     case Constants.NAVIGATE_SEARCH:
-      return <ViewSearch params={lastNavigation.payload} profiles={profiles} />
+      return <ViewSearch params={lastNavigation.payload} />
     case Constants.NAVIGATE_VIEW_PROFILE: {
       let {profileId, bottomUp, flatten} = lastNavigation.payload
-      return <ViewProfile profileId={profileId} data={profiles.results[profileId]} bottomUp={bottomUp} flatten={flatten} />
+      return <ViewProfile profileId={profileId} bottomUp={bottomUp} flatten={flatten} />
     }
     default:
       return <Throbber />
   }
 }
 
-export function ViewSearch ({props: {params, profiles}, dispatch}) {
+export function ViewSearch ({props: {params, profiles}, dispatch, context: {searchResults}}) {
   return <div class='row'>
     <div class='col-md-4 col-lg-3'>
       <div class='card'>
@@ -45,9 +45,9 @@ export function ViewSearch ({props: {params, profiles}, dispatch}) {
       <div class='card'>
         <h3 class='card-header'>Results</h3>
         {
-          _.isEqual(params, profiles.search)
+          _.isEqual(params, searchResults.search)
           ? <div>
-            <Search profiles={profiles} />
+            <Search profiles={searchResults.results} />
             <div class='card-block'>
               <button class='btn btn-primary btn-lg btn-block'
                 onClick={() => dispatch(Actions.WANT_MORE())}>
@@ -144,8 +144,8 @@ export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
   </form>
 }
 
-export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {
-  if (!data) return <Throbber />
+export function ViewProfile ({props: {profileId, bottomUp, flatten}, context: {profileData: {profileId: dataProfileId, data}}}) {
+  if (!(profileId === dataProfileId)) return <Throbber />
   switch (flatten) {
     case 'strip_messages':
       data = stripMessageBarriers(data)
@@ -164,7 +164,7 @@ export function ViewProfile ({props: {profileId, data, bottomUp, flatten}}) {
   }
   return <div class='card'>
     <div class='card-header'>
-      <ViewProfileNav profileId={profileId} bottomUp={bottomUp} flatten={flatten} task_uuid={data.task_uuid}/>
+      <ViewProfileNav profileId={profileId} bottomUp={bottomUp} flatten={flatten} task_uuid={data.task_uuid} />
     </div>
     <div class='card-block'>
       {

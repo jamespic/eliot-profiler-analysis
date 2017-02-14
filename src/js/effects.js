@@ -6,9 +6,12 @@ import Immutable from 'seamless-immutable'
 import _ from 'lodash'
 
 export async function searchEffect ({action: {payload: params}, dispatch, getState}) {
-  let {profiles: {search}} = getState()
+  let {searchResults: {search}} = getState()
   if (!_.isEqual(params, search)) {
-    let requestParams = Immutable(params).set('_count', 100)
+    let requestParams = Immutable(params).merge({
+      _count: 100,
+      _summary: true
+    })
     let result = await fetch(`/api/data?${stringify(requestParams)}`)
     let json = await result.json()
     dispatch(Actions.RECEIVE_SEARCH_RESULTS(params, json))
@@ -16,11 +19,12 @@ export async function searchEffect ({action: {payload: params}, dispatch, getSta
 }
 
 export async function searchMoreEffect ({action, dispatch, getState}) {
-  let {profiles: {search, results}} = getState()
+  let {searchResults: {search, results}} = getState()
   if (search != null) {
     let keys = Object.keys(results)
     let requestParams = Immutable(search).merge({
       _count: keys.length,
+      _summary: true,
       _start_record: keys[keys.length - 1]
     })
     let result = await fetch(`/api/data?${stringify(requestParams)}`)
@@ -54,8 +58,8 @@ export async function attribValuesEffect ({action, dispatch, getState}) {
 }
 
 export async function viewEffect ({action: {payload: {profileId}}, dispatch, getState}) {
-  let downloadedProfiles = getState().profiles.results
-  if (!(downloadedProfiles && (profileId in downloadedProfiles))) {
+  let {profileData} = getState()
+  if (!(profileData.profileId === profileId)) {
     let result = await fetch(`/api/data/${encodeURIComponent(profileId)}`)
     let json = await result.json()
     dispatch(Actions.RECEIVE_PROFILE_DATA(profileId, json))

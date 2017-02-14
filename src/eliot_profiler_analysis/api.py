@@ -22,6 +22,43 @@ def _make_search_date(datestr):
     return date
 
 
+def _summarize_callgraph(callgraph, limit=5):
+    class _FinishedSummarizing(Exception):
+        pass
+
+    actions = []
+    instructions = []
+
+    def read_node(node):
+        if 'message' in node and 'action_type' in node['message']:
+            action = node['message']['action_type']
+            if action not in actions and len(actions) < limit:
+                actions.append(action)
+        if 'instruction' in node:
+            instruction = node['instruction']
+            if instruction not in instructions and len(instructions) < limit:
+                instructions.append(instruction)
+        if len(actions) >= limit and len(instructions) >= limit:
+            raise _FinishedSummarizing()
+        if 'children' in node:
+            for child in node['children']:
+                read_node(child)
+
+    try:
+        read_node(callgraph)
+    except _FinishedSummarizing:
+        pass
+
+    return {
+        'start_time': callgraph.get('start_time'),
+        'time': callgraph.get('time'),
+        'instructions': instructions,
+        'actions': actions,
+        'task_uuid': callgraph.get('task_uuid'),
+        'source': callgraph.get('source')
+    }
+
+
 def api(db):
     @returns_json
     def get_data(environ, start_response):
@@ -56,8 +93,18 @@ def api(db):
                 query['_end_time'] = _make_search_date(query['_end_time'])
             if '_count' in query:
                 query['_count'] = int(query['_count'])
+            if '_summary' in query:
+                summarise = query['_summary'] == 'true'
+                del query['_summary']
+            else:
+                summarise = False
             action.add_success_fields(query=query)
-            result = db.search(**query)
+            query_result = db.search(**query)
+            if summarise:
+                result = [(key, _summarize_callgraph(cg))
+                          for key, cg in query_result]
+            else:
+                result = list(query_result)
             action.add_success_fields(results=len(result))
             return result
 

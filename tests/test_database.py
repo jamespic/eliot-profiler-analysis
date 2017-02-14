@@ -153,48 +153,48 @@ class TestSearch(unittest.TestCase):
             shutil.rmtree(dbdir)
 
     def test_all_descending(self):
-        result = self.instance.search()
+        result = list(self.instance.search())
         self.assertEqual([self.o3, self.o2, self.o1], result)
         self.assertMessage(query_plan=['all_descending'])
 
     def test_all_descending_start_record(self):
-        result = self.instance.search(_start_record=self.r3)
+        result = list(self.instance.search(_start_record=self.r3))
         self.assertEqual([self.o2, self.o1], result)
         self.assertMessage(query_plan=['all_descending_start_record'])
 
     def test_all_descending_end_time(self):
-        result = self.instance.search(_end_time=dt(2010, 1, 4))
+        result = list(self.instance.search(_end_time=dt(2010, 1, 4)))
         self.assertEqual([self.o2, self.o1], result)
         self.assertMessage(query_plan=['all_descending_end_time'])
 
     def test_all_descending_start_time(self):
-        result = self.instance.search(_start_time=dt(2010, 1, 2))
+        result = list(self.instance.search(_start_time=dt(2010, 1, 2)))
         self.assertEqual([self.o3, self.o2], result)
         self.assertMessage(query_plan=['all_descending', 'stop_time_descending'])
 
     def test_all_descending_stop_count(self):
-        result = self.instance.search(_order=OLDEST, _count=2)
+        result = list(self.instance.search(_order=OLDEST, _count=2))
         self.assertEqual([self.o1, self.o2], result)
         self.assertMessage(query_plan=['all_ascending', 'stop_count'])
 
     def test_all_ascending_start_record(self):
-        result = self.instance.search(_order=OLDEST, _start_record=self.r1)
+        result = list(self.instance.search(_order=OLDEST, _start_record=self.r1))
         self.assertEqual([self.o2, self.o3], result)
         self.assertMessage(query_plan=['all_ascending_start_record'])
 
     def test_all_ascending_start_time(self):
-        result = self.instance.search(_order=OLDEST,
-                                      _start_time=dt(2010, 1, 2))
+        result = list(self.instance.search(_order=OLDEST,
+                                      _start_time=dt(2010, 1, 2)))
         self.assertEqual([self.o2, self.o3], result)
         self.assertMessage(query_plan=['all_ascending_start_time'])
 
     def test_all_ascending_end_time(self):
-        result = self.instance.search(_order=OLDEST, _end_time=dt(2010, 1, 4))
+        result = list(self.instance.search(_order=OLDEST, _end_time=dt(2010, 1, 4)))
         self.assertEqual([self.o1, self.o2], result)
         self.assertMessage(query_plan=['all_ascending', 'stop_time_ascending'])
 
     def test_indexed_descending(self):
-        result = self.instance.search(thread='12346')
+        result = list(self.instance.search(thread='12346'))
         self.assertEqual([self.o3, self.o2], result)
         self.assertMessage(query_plan=[
             ('indexed_descending', 'thread=12346'),
@@ -202,8 +202,8 @@ class TestSearch(unittest.TestCase):
         ])
 
     def test_indexed_descending_start_record(self):
-        result = self.instance.search(
-            source='test_source', _start_record=self.r3)
+        result = list(self.instance.search(
+            source='test_source', _start_record=self.r3))
         self.assertEqual([self.o2, self.o1], result)
         self.assertMessage(query_plan=[
             ('indexed_descending_start_record', 'source=test_source'),
@@ -211,8 +211,8 @@ class TestSearch(unittest.TestCase):
         ])
 
     def test_indexed_descending_end_time(self):
-        result = self.instance.search(
-            source='test_source', _end_time=dt(2010, 1, 4))
+        result = list(self.instance.search(
+            source='test_source', _end_time=dt(2010, 1, 4)))
         self.assertEqual([self.o2, self.o1], result)
         self.assertMessage(query_plan=[
             ('indexed_descending_end_time', 'source=test_source'),
@@ -220,7 +220,7 @@ class TestSearch(unittest.TestCase):
         ])
 
     def test_indexed_ascending(self):
-        result = self.instance.search(_order=OLDEST, thread='12346')
+        result = list(self.instance.search(_order=OLDEST, thread='12346'))
         self.assertEqual([self.o2, self.o3], result)
         self.assertMessage(query_plan=[
             ('indexed_ascending', 'thread=12346'),
@@ -228,8 +228,8 @@ class TestSearch(unittest.TestCase):
         ])
 
     def test_indexed_ascending_start_record(self):
-        result = self.instance.search(
-            _order=OLDEST, _start_record=self.r1, source='test_source')
+        result = list(self.instance.search(
+            _order=OLDEST, _start_record=self.r1, source='test_source'))
         self.assertEqual([self.o2, self.o3], result)
         self.assertMessage(query_plan=[
             ('indexed_ascending_start_record', 'source=test_source'),
@@ -237,8 +237,8 @@ class TestSearch(unittest.TestCase):
         ])
 
     def test_indexed_ascending_start_time(self):
-        result = self.instance.search(
-            _order=OLDEST, _start_time=dt(2010, 1, 2), source='test_source')
+        result = list(self.instance.search(
+            _order=OLDEST, _start_time=dt(2010, 1, 2), source='test_source'))
         self.assertEqual([self.o2, self.o3], result)
         self.assertMessage(query_plan=[
             ('indexed_ascending_start_time', 'source=test_source'),
@@ -246,8 +246,8 @@ class TestSearch(unittest.TestCase):
         ])
 
     def test_index_order(self):
-        result = self.instance.search(
-            task_uuid='124', source='test_source', thread='12346')
+        result = list(self.instance.search(
+            task_uuid='124', source='test_source', thread='12346'))
         self.assertEqual([self.o2], result)
         self.assertMessage(query_plan=[
             ('indexed_descending', 'task_uuid=124'),

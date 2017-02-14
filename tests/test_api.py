@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import unittest
-from eliot_profiler_analysis.api import api
+from eliot_profiler_analysis.api import api, _summarize_callgraph
 from eliot_profiler_analysis.database import Database
 import json
 import shutil
@@ -9,7 +9,7 @@ from werkzeug.test import Client
 from werkzeug.wrappers import Response
 
 
-class TestSearch(unittest.TestCase):
+class TestAPI(unittest.TestCase):
     def assertMessage(self, **kwargs):
         self.logs.assertMessage(**kwargs)
 
@@ -23,6 +23,8 @@ class TestSearch(unittest.TestCase):
             'task_uuid': '123',
             'source': 'test_source',
             'thread': 12345,
+            'instruction': 'hello',
+            'time': 5.0,
             'start_time': '2010-01-01T00:00:00.000+00:00',
         }
         (key,) = self.db.insert([self.data_item])
@@ -43,6 +45,21 @@ class TestSearch(unittest.TestCase):
         self.assertEqual([[self.key, self.data_item]],
                          json.loads(response.data.decode('utf-8')))
 
+    def test_search_data_summarize(self):
+        response = self.instance.get('/data?source=test_source&_summary=true')
+        self.assertEqual([[
+                self.key,
+                {
+                    'start_time': '2010-01-01T00:00:00.000+00:00',
+                    'time': 5.0,
+                    'instructions': ['hello'],
+                    'actions': [],
+                    'task_uuid': '123',
+                    'source': 'test_source'
+                }
+            ]],
+            json.loads(response.data.decode('utf-8')))
+
     def test_post_data(self):
         test_item = {
             'task_uuid': '321',
@@ -59,9 +76,63 @@ class TestSearch(unittest.TestCase):
     def test_attrib_names(self):
         response = self.instance.get('/attribs')
         self.assertItemsEqual(
-            ['task_uuid', 'source', 'thread'],
+            ['task_uuid', 'source', 'thread', 'instruction'],
             json.loads(response.data.decode('utf-8')))
 
-    def test_attrib_names(self):
+    def test_attrib_values(self):
         response = self.instance.get('/attribs/thread')
         self.assertEqual(['12345'], json.loads(response.data.decode('utf-8')))
+
+    def test_summarize_call_graph(self):
+        result = _summarize_callgraph({
+            'task_uuid': '123',
+            'source': 'test_source',
+            'start_time': '2010-01-01T09:00:00.000Z',
+            'time': 5.0,
+            'instruction': 'inst1',
+            'message': {
+                'action_type': 'action1'
+            },
+            'children': [
+                {
+                    'instruction': 'inst2',
+                    'message': {
+                        'action_type': 'action2'
+                    },
+                    'children': [
+                        {
+                            'instruction': 'inst3',
+                            'message': {
+                                'action_type': 'action3'
+                            }
+                        }
+                    ]
+                },
+                {
+                    'instruction': 'inst4',
+                    'message': {
+                        'action_type': 'action4'
+                    }
+                },
+                {
+                    'instruction': 'inst5',
+                    'message': {
+                        'action_type': 'action5'
+                    }
+                },
+                {
+                    'instruction': 'redundant',
+                    'message': {
+                        'action_type': 'redundant'
+                    }
+                }
+            ]
+        })
+        self.assertEqual({
+            'start_time': '2010-01-01T09:00:00.000Z',
+            'time': 5.0,
+            'instructions': ['inst1', 'inst2', 'inst3', 'inst4', 'inst5'],
+            'actions': ['action1', 'action2', 'action3', 'action4', 'action5'],
+            'task_uuid': '123',
+            'source': 'test_source'
+        }, result)

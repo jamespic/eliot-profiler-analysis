@@ -1,5 +1,4 @@
 import {element} from './deku-seamless-immutable'
-import {summariseCallGraph} from './callgraph-helpers'
 import {humanizeSeconds, humanizeMoment} from './utils'
 import _ from 'lodash'
 
@@ -13,11 +12,13 @@ export default function Search ({props: {profiles}}) {
     </thead>
     <tbody>
       {
-        _.map(profiles.results, (callGraph, key) => <tr>
+        _.map(profiles, (callGraph, key) => <tr>
           <td>{callGraph.source}</td>
           <td>
             <a href={`/view/${encodeURIComponent(key)}`}>
-              {summariseCallGraph(callGraph)}
+              {
+                callGraph.actions.join(', ') || callGraph.instructions.join(', ') || callGraph.task_uuid
+              }
             </a>
           </td>
           <td>{humanizeMoment(callGraph.start_time)}</td>

@@ -135,7 +135,6 @@ class Database(object):
                     yield d(cursor.value())
                     success = cursor.next_dup()
 
-    @unyield
     def search(self,
                _start_time=None,
                _end_time=None,
