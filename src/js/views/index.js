@@ -11,6 +11,7 @@ import {stripMessageBarriers, flattenByLine, flattenByMethod, flattenByFile, sel
 import _ from 'lodash'
 import {stringify} from 'query-string'
 import moment from 'moment'
+import Immutable from 'seamless-immutable'
 
 export function Main () {
   return <div class='container-fluid'>
@@ -24,7 +25,11 @@ export function RoutedContent ({context: {lastNavigation}}) {
       return <ViewSearch params={lastNavigation.payload} />
     case Constants.NAVIGATE_VIEW_PROFILE: {
       let {profileId, bottomUp, flatten} = lastNavigation.payload
-      return <ViewProfile profileId={profileId} bottomUp={bottomUp} flatten={flatten} />
+      return <ViewProfileSingle profileId={profileId} bottomUp={bottomUp} flatten={flatten} />
+    }
+    case Constants.NAVIGATE_VIEW_AGGREGATE: {
+      let {flatten, bottomUp, params} = lastNavigation.payload
+      return <ViewProfileAggregate search={params} bottomUp={bottomUp} flatten={flatten} />
     }
     default:
       return <Throbber />
@@ -43,7 +48,11 @@ export function ViewSearch ({props: {params, profiles}, dispatch, context: {sear
     </div>
     <div class='col-md-8 col-lg-9'>
       <div class='card'>
-        <h3 class='card-header'>Results</h3>
+        <h3 class='card-header'>
+          Results <small>
+            <a href={`/view-aggregate?${stringify(params)}`}>View Combined Profile</a>
+          </small>
+        </h3>
         {
           _.isEqual(params, searchResults.search)
           ? <div>
@@ -144,8 +153,25 @@ export function SearchOptions ({context: {searchOptions, attribs}, dispatch}) {
   </form>
 }
 
-export function ViewProfile ({props: {profileId, bottomUp, flatten}, context: {profileData: {profileId: dataProfileId, data}}}) {
+export function ViewProfileSingle ({props: {profileId, bottomUp, flatten}, context: {profileData: {profileId: dataProfileId, data}}}) {
+  function makeUrl (bottomUp, flatten) {
+    return `/view/${encodeURIComponent(profileId)}?bottomUp=${bottomUp}&flatten=${flatten}`
+  }
+  let relatedUrl = data && data.task_uuid && `/search?task_uuid=${encodeURIComponent(data.task_uuid)}`
   if (!(profileId === dataProfileId)) return <Throbber />
+  else return <ViewProfile data={data} makeUrl={makeUrl} relatedUrl={relatedUrl} bottomUp={bottomUp} flatten={flatten} />
+}
+
+export function ViewProfileAggregate ({props: {search, bottomUp, flatten}, context: {profileAggregateData: {params, data}}}) {
+  function makeUrl (bottomUp, flatten) {
+    return `/view-aggregate?${stringify(search.merge({_bottomUp: bottomUp, _flatten: flatten}))}`
+  }
+  let relatedUrl = `/search?${stringify(search)}`
+  if (!_.isEqual(search, params)) return <Throbber />
+  else return <ViewProfile data={data} makeUrl={makeUrl} relatedUrl={relatedUrl} bottomUp={bottomUp} flatten={flatten} />
+}
+
+export function ViewProfile ({props: {data, makeUrl, relatedUrl, bottomUp, flatten}}) {
   switch (flatten) {
     case 'strip_messages':
       data = stripMessageBarriers(data)
@@ -164,7 +190,7 @@ export function ViewProfile ({props: {profileId, bottomUp, flatten}, context: {p
   }
   return <div class='card'>
     <div class='card-header'>
-      <ViewProfileNav profileId={profileId} bottomUp={bottomUp} flatten={flatten} task_uuid={data.task_uuid} />
+      <ViewProfileNav makeUrl={makeUrl} bottomUp={bottomUp} flatten={flatten} relatedUrl={relatedUrl} />
     </div>
     <div class='card-block'>
       {
@@ -176,11 +202,11 @@ export function ViewProfile ({props: {profileId, bottomUp, flatten}, context: {p
   </div>
 }
 
-function ViewProfileNav ({props: {profileId, bottomUp, flatten, task_uuid}}) {
+function ViewProfileNav ({props: {makeUrl, bottomUp, flatten, relatedUrl}}) {
   function changedOptionUrl (option, value) {
     let newBottomUp = (option === 'bottomUp') ? value : bottomUp
     let newFlatten = (option === 'flatten') ? value : flatten
-    return `/view/${encodeURIComponent(profileId)}?bottomUp=${newBottomUp}&flatten=${newFlatten}`
+    return makeUrl(newBottomUp, newFlatten)
   }
   return <nav class='nav nav-pills flex-column flex-sm-row'>
     <div class='navbar-brand'>Profile</div>
@@ -202,9 +228,13 @@ function ViewProfileNav ({props: {profileId, bottomUp, flatten, task_uuid}}) {
       <a class={`dropdown-item ${flatten === 'file' ? 'active' : ''}`}
         href={changedOptionUrl('flatten', 'file')}>Collapse Recursive Files</a>
     </DropDown>
-    <a href={`/search?task_uuid=${encodeURIComponent(task_uuid)}`}
-      class='nav-link ml-auto'>
-      View Related
-    </a>
+    {
+      relatedUrl
+      ? <a href={relatedUrl}
+        class='nav-link ml-auto'>
+        View Related
+      </a>
+      : null
+    }
   </nav>
 }

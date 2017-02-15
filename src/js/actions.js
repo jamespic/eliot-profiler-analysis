@@ -8,6 +8,9 @@ export const Actions = {
   RECEIVE_PROFILE_DATA (profileId, data) {
     return {profileId, data}
   },
+  RECEIVE_PROFILE_AGGREGATE_DATA (params, data) {
+    return {params, data}
+  },
   RECEIVE_ATTRIB_LIST (attribList) {
     return attribList
   },
@@ -16,6 +19,9 @@ export const Actions = {
   },
   NAVIGATE_VIEW_PROFILE (profileId, bottomUp = false, flatten) {
     return {profileId, bottomUp, flatten}
+  },
+  NAVIGATE_VIEW_AGGREGATE (bottomUp, flatten, params) {
+    return {bottomUp, flatten, params}
   },
   NAVIGATE_SEARCH (params) {
     return params

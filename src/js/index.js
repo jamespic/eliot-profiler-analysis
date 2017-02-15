@@ -33,6 +33,10 @@ page('/view/:profileId', (context) => {
 page('/search', (context) => {
   store.dispatch(Actions.NAVIGATE_SEARCH(parse(context.querystring)))
 })
+page('/view-aggregate', (context) => {
+  let {_bottomUp, _flatten, ...params} = parse(context.querystring)
+  store.dispatch(Actions.NAVIGATE_VIEW_AGGREGATE(_bottomUp === 'true', _flatten, params))
+})
 page('/', '/search')
 page({decodeURLComponents: false})
 

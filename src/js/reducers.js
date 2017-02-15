@@ -8,6 +8,7 @@ export function lastNavigation (state = Immutable({}), action) {
   switch (action.type) {
     case Constants.NAVIGATE_SEARCH:
     case Constants.NAVIGATE_VIEW_PROFILE:
+    case Constants.NAVIGATE_VIEW_AGGREGATE:
       return action
     default:
       return state
@@ -17,6 +18,15 @@ export function lastNavigation (state = Immutable({}), action) {
 export function profileData (state = Immutable({}), action) {
   switch (action.type) {
     case Constants.RECEIVE_PROFILE_DATA:
+      return action.payload
+    default:
+      return state
+  }
+}
+
+export function profileAggregateData (state = Immutable({}), action) {
+  switch (action.type) {
+    case Constants.RECEIVE_PROFILE_AGGREGATE_DATA:
       return action.payload
     default:
       return state

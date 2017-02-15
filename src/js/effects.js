@@ -18,6 +18,16 @@ export async function searchEffect ({action: {payload: params}, dispatch, getSta
   }
 }
 
+export async function viewAggregateEffect ({action: {payload: {params}}, dispatch, getState}) {
+  let {searchResults: {search}} = getState()
+  if (!_.isEqual(params, search)) {
+    let requestParams = Immutable(params).set('_summary', 'aggregate')
+    let result = await fetch(`/api/data?${stringify(requestParams)}`)
+    let json = await result.json()
+    dispatch(Actions.RECEIVE_PROFILE_AGGREGATE_DATA(params, json))
+  }
+}
+
 export async function searchMoreEffect ({action, dispatch, getState}) {
   let {searchResults: {search, results}} = getState()
   if (search != null) {
@@ -87,5 +97,6 @@ export default [
   {action: Constants.CHANGE_SEARCH_OPTIONS, effect: attribValuesEffect},
   {action: Constants.WANT_MORE, effect: searchMoreEffect},
   {action: Constants.NAVIGATE_VIEW_PROFILE, effect: viewEffect},
+  {action: Constants.NAVIGATE_VIEW_AGGREGATE, effect: viewAggregateEffect},
   {action: Constants.SET_VISIBLE_DROPDOWN, effect: dropDownEffect}
 ]

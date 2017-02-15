@@ -7,6 +7,7 @@ try:
 except ImportError:
     from urllib.parse import parse_qs
 from .wsgi_utils import returns_json
+from .aggregate import combine_call_graphs
 from werkzeug.wsgi import make_line_iter, get_input_stream, responder, peek_path_info, pop_path_info, get_query_string
 from werkzeug.wrappers import Response
 import eliot
@@ -95,14 +96,18 @@ def api(db):
                 query['_count'] = int(query['_count'])
             if '_summary' in query:
                 summarise = query['_summary'] == 'true'
+                aggregate = query['_summary'] == 'aggregate'
                 del query['_summary']
             else:
                 summarise = False
+                aggregate = False
             action.add_success_fields(query=query)
             query_result = db.search(**query)
             if summarise:
                 result = [(key, _summarize_callgraph(cg))
                           for key, cg in query_result]
+            elif aggregate:
+                result = combine_call_graphs(cg for key, cg in query_result)
             else:
                 result = list(query_result)
             action.add_success_fields(results=len(result))
