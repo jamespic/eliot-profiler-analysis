@@ -59,6 +59,7 @@ export function expandedCallGraphNodes (state = Immutable({}), action) {
       return state.update(action.payload, x => !x)
     case Constants.NAVIGATE_SEARCH:
     case Constants.NAVIGATE_VIEW_PROFILE:
+    case Constants.NAVIGATE_VIEW_AGGREGATE:
       return Immutable({})
     default:
       return state
