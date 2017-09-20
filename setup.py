@@ -10,9 +10,9 @@ class sdist(_sdist):
         _sdist.run(self)
 
 setup(
-    name='Eliot Profiler Analysis',
+    name='Profil-o-matic-analysis',
     version='0.1',
-    description='An analysis tool for Eliot Profiler data',
+    description='An analysis tool for Profil-o-matic data',
     author='James Pickering',
     author_email='james_pic@hotmail.com',
     url='https://github.com/jamespic/eliot-profiler',
@@ -20,7 +20,7 @@ setup(
     package_dir={'':'src'},
     include_package_data=True,
     install_requires=[
-        'dateutils',
+        'ciso8601',
         'eliot',
         'werkzeug',
         'lmdb',

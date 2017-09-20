@@ -1,2 +1,2 @@
-# eliot-profiler-analysis
-An analysis tool for eliot-profiler
+# Profil-o-matic Analysis
+An analysis tool for Profil-o-matic

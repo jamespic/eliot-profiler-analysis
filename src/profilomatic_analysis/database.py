@@ -4,7 +4,7 @@ import lmdb
 import six
 from contextlib import closing
 from wrapt import decorator
-from dateutil.parser import parse as parse_date
+from ciso8601 import parse_datetime as parse_date
 from pytz import utc
 
 try:
@@ -58,7 +58,7 @@ OLDEST = 'oldest'
 
 
 def _key_time(key):
-    return parse_date(key.split(b'~', 1)[0])
+    return parse_date(key.split(b'~', 1)[0].decode('utf-8'))
 
 
 def _format_time(timestamp):

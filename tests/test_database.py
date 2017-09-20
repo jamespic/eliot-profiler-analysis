@@ -3,7 +3,7 @@ import tempfile
 import unittest
 import shutil
 import datetime
-from eliot_profiler_analysis.database import Database, extract_attribs, OLDEST
+from profilomatic_analysis.database import Database, extract_attribs, OLDEST
 from pytz import utc
 from .util import TestLogDestination
 

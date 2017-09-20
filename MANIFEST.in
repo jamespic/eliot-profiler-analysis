@@ -1,4 +1,4 @@
-graft src/eliot_profiler_analysis/static
+graft src/profilomatic_analysis/static
 # added by check_manifest.py
 include *.md
 include *.py

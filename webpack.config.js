@@ -1,10 +1,11 @@
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const path = require('path')
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 
 module.exports = {
   entry: ['babel-polyfill', './src/js/index.js'],
   output: {
-    path: path.resolve(__dirname, 'src/eliot_profiler_analysis/static/bundle'),
+    path: path.resolve(__dirname, 'src/profilomatic_analysis/static/bundle'),
     filename: 'bundle.js'
   },
   module: {

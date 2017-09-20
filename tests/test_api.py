@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import unittest
-from eliot_profiler_analysis.api import api, _summarize_callgraph
-from eliot_profiler_analysis.database import Database
+from profilomatic_analysis.api import api, _summarize_callgraph
+from profilomatic_analysis.database import Database
 import json
 import shutil
 import tempfile

@@ -2,7 +2,7 @@ import unittest
 import sys
 from werkzeug.test import Client
 from werkzeug.wrappers import Response
-from eliot_profiler_analysis.wsgi_utils import not_found, returns_json
+from profilomatic_analysis.wsgi_utils import not_found, returns_json
 
 
 class NotFoundTest(unittest.TestCase):

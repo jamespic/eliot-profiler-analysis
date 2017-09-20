@@ -92,7 +92,7 @@ ENV/
 node_modules/
 
 # Webpack outputs
-/src/eliot_profiler_analysis/static/bundle/
+/src/profilomatic_analysis/static/bundle/
 
 # Tern settings
 .tern-project

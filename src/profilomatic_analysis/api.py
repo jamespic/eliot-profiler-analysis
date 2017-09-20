@@ -1,5 +1,5 @@
 from cheroot.wsgi import PathInfoDispatcher
-from dateutil.parser import parse as parse_date
+from ciso8601 import parse_datetime as parse_date
 import json
 from pytz import utc
 try:
