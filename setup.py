@@ -11,11 +11,11 @@ class sdist(_sdist):
 
 setup(
     name='Profil-o-matic-analysis',
-    version='0.1',
+    version='0.2.0',
     description='An analysis tool for Profil-o-matic data',
     author='James Pickering',
     author_email='james_pic@hotmail.com',
-    url='https://github.com/jamespic/eliot-profiler',
+    url='https://github.com/jamespic/profil-o-matic-analysis',
     packages=find_packages('src'),
     package_dir={'':'src'},
     include_package_data=True,

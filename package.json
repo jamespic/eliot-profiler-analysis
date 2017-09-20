@@ -1,7 +1,7 @@
 {
-  "name": "eliot-profiler-analysis",
+  "name": "profil-o-matic-analysis",
   "version": "0.1.0",
-  "description": "An analysis tool for eliot-profiler",
+  "description": "An analysis tool for profil-o-matic",
   "main": "index.js",
   "directories": {
     "test": "tests"
@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jamespic/eliot-profiler-analysis.git"
+    "url": "git+https://github.com/jamespic/profil-o-matic-analysis.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jamespic/eliot-profiler-analysis/issues"
+    "url": "https://github.com/jamespic/profil-o-matic-analysis/issues"
   },
-  "homepage": "https://github.com/jamespic/eliot-profiler-analysis#readme",
+  "homepage": "https://github.com/jamespic/profil-o-matic-analysis#readme",
   "devDependencies": {
     "babel-core": "^6.22.1",
     "babel-eslint": "^7.1.1",
