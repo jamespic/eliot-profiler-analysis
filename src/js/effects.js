@@ -19,7 +19,7 @@ export async function searchEffect ({action: {payload: params}, dispatch, getSta
 }
 
 export async function viewAggregateEffect ({action: {payload: {params}}, dispatch, getState}) {
-  let {searchResults: {search}} = getState()
+  let {profileAggregateData: {params: search}} = getState()
   if (!_.isEqual(params, search)) {
     let requestParams = Immutable(params).set('_summary', 'aggregate')
     let result = await fetch(`/api/data?${stringify(requestParams)}`)

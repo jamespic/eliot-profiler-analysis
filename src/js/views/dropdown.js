@@ -15,7 +15,7 @@ export default function DropDown ({children, path, dispatch, props: {title}, con
       }}>
       {title}
     </a>
-    <div class='dropdown-menu'>
+    <div class={`dropdown-menu ${expanded ? 'show' : ''}`}>
       {children}
     </div>
   </li>

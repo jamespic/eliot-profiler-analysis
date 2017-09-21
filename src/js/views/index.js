@@ -41,7 +41,7 @@ export function ViewSearch ({props: {params, profiles}, dispatch, context: {sear
     <div class='col-md-4 col-lg-3'>
       <div class='card'>
         <h3 class='card-header'>Search</h3>
-        <div class='card-block'>
+        <div class='card-body'>
           <SearchOptions params={params} />
         </div>
       </div>
@@ -57,7 +57,7 @@ export function ViewSearch ({props: {params, profiles}, dispatch, context: {sear
           _.isEqual(params, searchResults.search)
           ? <div>
             <Search profiles={searchResults.results} />
-            <div class='card-block'>
+            <div class='card-body'>
               <button class='btn btn-primary btn-lg btn-block'
                 onClick={() => dispatch(Actions.WANT_MORE())}>
                 More
@@ -192,7 +192,7 @@ export function ViewProfile ({props: {data, makeUrl, relatedUrl, bottomUp, flatt
     <div class='card-header'>
       <ViewProfileNav makeUrl={makeUrl} bottomUp={bottomUp} flatten={flatten} relatedUrl={relatedUrl} />
     </div>
-    <div class='card-block'>
+    <div class='card-body'>
       {
         bottomUp
         ? <BottomUpCallGraph key='bottomUpGraph' callGraph={selfGraph(data)} totalTime={data.time} />
